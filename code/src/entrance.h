@@ -33,6 +33,7 @@ typedef struct {
 
 typedef enum {
     ENTRANCE_GROUP_NO_GROUP,
+    ENTRANCE_GROUP_ROOT_EXITS,
     ENTRANCE_GROUP_KOKIRI_FOREST,
     ENTRANCE_GROUP_LOST_WOODS,
     ENTRANCE_GROUP_KAKARIKO,
@@ -57,9 +58,13 @@ typedef struct {
     u16 GroupOffsets[SPOILER_ENTRANCE_GROUP_COUNT];
 } EntranceTrackingData;
 
+#define ENTRANCE_NAME_SOURCE 0
+#define ENTRANCE_NAME_DESTINATION 1
+
 typedef struct {
     s16 index;
-    char* name;
+    char* source;
+    char* destination;
     SpoilerEntranceGroup group;
 } EntranceName;
 
@@ -73,7 +78,9 @@ s16  Entrance_OverrideNextIndex(s16 nextEntranceIndex);
 u32  Entrance_IsLostWoodsBridge(void);
 void Entrance_EnteredLocation(void);
 u32  Entrance_SceneAndSpawnAre(u8 scene, u8 spawn);
-char* GetEntranceName(s16 index_);
+void Entrance_CheckEpona(void);
+void Entrance_SetSpeed(void);
+char* GetEntranceName(s16 index_, u8 type);
 void InitEntranceTrackingData(void);
 
 #endif //_ENTRANCE_H_

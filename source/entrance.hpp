@@ -39,6 +39,11 @@ public:
         }
     }
 
+    // Resets the glitchless condition for the entrance
+    void SetCondition(ConditionFn newCondition) {
+        conditions_met[0] = newCondition;
+    }
+
     bool GetConditionsMet() const {
         if (Settings::Logic.Is(LOGIC_NONE) || Settings::Logic.Is(LOGIC_VANILLA)) {
             return true;
@@ -113,7 +118,6 @@ public:
         return GetConditionsMet();
     }
 
-    //Yes this is the exact same function as above, trust me on this
     AreaKey GetConnectedRegionKey() const {
         return connectedRegion;
     }

@@ -99,6 +99,7 @@ static char *spoilerCollectionGroupNames[] = {
 
 static char* spoilerEntranceGroupNames[] = {
     "",
+    "Spawns and Warp Songs",
     "Kokiri Forest",
     "Lost Woods",
     "Kakariko Village",
@@ -574,10 +575,10 @@ static void Gfx_DrawERTracker(void) {
 
         u32 color = isDiscovered ? COLOR_GREEN : COLOR_WHITE;
         const char* unknown = "???";
-        const char* origSrcName = GetEntranceName(rEntranceOverrides[locIndex].index);
-        const char* origDstName = GetEntranceName(rEntranceOverrides[locIndex].destination);
-        const char* rplcSrcName = gSettingsContext.ingameSpoilers || isDiscovered ? GetEntranceName(rEntranceOverrides[locIndex].override) : unknown;
-        const char* rplcDstName = gSettingsContext.ingameSpoilers || isDiscovered ? GetEntranceName(rEntranceOverrides[locIndex].overrideDestination) : unknown;
+        const char* origSrcName = GetEntranceName(rEntranceOverrides[locIndex].index, ENTRANCE_NAME_SOURCE);
+        const char* origDstName = GetEntranceName(rEntranceOverrides[locIndex].index, ENTRANCE_NAME_DESTINATION);
+        const char* rplcSrcName = gSettingsContext.ingameSpoilers || isDiscovered ? GetEntranceName(rEntranceOverrides[locIndex].override, ENTRANCE_NAME_SOURCE) : unknown;
+        const char* rplcDstName = gSettingsContext.ingameSpoilers || isDiscovered ? GetEntranceName(rEntranceOverrides[locIndex].override, ENTRANCE_NAME_DESTINATION) : unknown;
 
         Draw_DrawFormattedString_Small(10, locPosY, color, "%s to %s %c", origSrcName, origDstName, RIGHT_ARROW_CHR);
         Draw_DrawFormattedString_Small(10, itemPosY, color, "  %s from %s", rplcDstName, rplcSrcName);
@@ -621,10 +622,10 @@ static void Gfx_DrawERTrackerGroups(void) {
 
         u32 color = isDiscovered ? COLOR_GREEN : COLOR_WHITE;
         const char* unknown = "???";
-        const char* origSrcName = GetEntranceName(rEntranceOverrides[locIndex].index);
-        const char* origDstName = GetEntranceName(rEntranceOverrides[locIndex].destination);
-        const char* rplcSrcName = gSettingsContext.ingameSpoilers || isDiscovered ? GetEntranceName(rEntranceOverrides[locIndex].override) : unknown;
-        const char* rplcDstName = gSettingsContext.ingameSpoilers || isDiscovered ? GetEntranceName(rEntranceOverrides[locIndex].overrideDestination) : unknown;
+        const char* origSrcName = GetEntranceName(rEntranceOverrides[locIndex].index, ENTRANCE_NAME_SOURCE);
+        const char* origDstName = GetEntranceName(rEntranceOverrides[locIndex].index, ENTRANCE_NAME_DESTINATION);
+        const char* rplcSrcName = gSettingsContext.ingameSpoilers || isDiscovered ? GetEntranceName(rEntranceOverrides[locIndex].override, ENTRANCE_NAME_SOURCE) : unknown;
+        const char* rplcDstName = gSettingsContext.ingameSpoilers || isDiscovered ? GetEntranceName(rEntranceOverrides[locIndex].override, ENTRANCE_NAME_DESTINATION) : unknown;
 
         Draw_DrawFormattedString_Small(10, locPosY, color, "%s to %s %c", origSrcName, origDstName, RIGHT_ARROW_CHR);
         Draw_DrawFormattedString_Small(10, itemPosY, color, "  %s from %s", rplcDstName, rplcSrcName);

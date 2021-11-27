@@ -1220,6 +1220,10 @@ SECTIONS
 		*(.patch_SetBGMDayNight)
 	}
 
+	.patch_WarpSongEntranceOverride 0x488850 : {
+		*(.patch_WarpSongEntranceOverride)
+	}
+
 	.patch_SetFWGrottoID 0x4911D4 : {
 		*(.patch_SetFWGrottoID)
 	}
@@ -1238,6 +1242,14 @@ SECTIONS
 
 	.patch_FireTempleItemGiveTwo 0x491B60 : {
 		*(.patch_FireTempleItemGiveTwo)
+	}
+
+	.patch_DMTOwlEntranceOverride 0x492064 : {
+		*(.patch_DMTOwlEntranceOverride)
+	}
+
+	.patch_LHOwlEntranceOverride 0x492080 : {
+		*(.patch_LHOwlEntranceOverride)
 	}
 
 	.patch_FairyUseHealAmount 0x4968B4 : {
