@@ -55,6 +55,14 @@
 #define COLOR_DARK_GRAY     RGB8(0x29, 0x29, 0x29)
 #define COLOR_LIGHT_GRAY    RGB8(0x71, 0x71, 0x71)
 
+#define ENTR_COLOR_OVERWORLD    RGB8(0x00, 0xFF, 0x00) // Green
+#define ENTR_COLOR_INTERIOR     RGB8(0x00, 0xA0, 0xFF) // Blue
+#define ENTR_COLOR_GROTTO       RGB8(0xFF, 0x98, 0x00) // Orange
+#define ENTR_COLOR_DUNGEON      RGB8(0xBB, 0x00, 0xFF) // Purple
+#define ENTR_COLOR_OWL_FLIGHT   RGB8(0xFF, 0xFF, 0x00) // Yellow
+#define ENTR_COLOR_SPAWN        RGB8(0xFF, 0xFF, 0x00) // Yellow
+#define ENTR_COLOR_WARP_SONG    RGB8(0xFF, 0xFF, 0x00) // Yellow
+
 #define DRAW_MAX_FORMATTED_STRING_SIZE  512
 
 typedef enum

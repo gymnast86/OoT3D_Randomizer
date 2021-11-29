@@ -1636,7 +1636,6 @@ namespace Settings {
           LogicSpiritLowerAdultSwitch.SetSelectedIndex(1);
           LogicShadowStatue.SetSelectedIndex(1);
           LogicChildDeadhand.SetSelectedIndex(1);
-          LogicGtgWithoutHookshot.SetSelectedIndex(1);
           LogicGtgFakeWall.SetSelectedIndex(1);
           LogicLensSpirit.SetSelectedIndex(1);
           LogicLensShadow.SetSelectedIndex(1);
@@ -1702,6 +1701,7 @@ namespace Settings {
           //LogicSpiritSunChest.SetSelectedIndex(1);
           //LogicShadowFireArrowEntry.SetSelectedIndex(1);
           LogicShadowUmbrella.SetSelectedIndex(1);
+          LogicGtgWithoutHookshot.SetSelectedIndex(1);
         }
       }
     }
