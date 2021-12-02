@@ -71,9 +71,16 @@ static std::vector<Entrance*> AssumeEntrancePool(std::vector<Entrance*>& entranc
   std::vector<Entrance*> assumedPool = {};
   for (Entrance* entrance : entrancePool) {
     Entrance* assumedForward = entrance->AssumeReachable();
-    if (entrance->GetReverse() != nullptr /*&& entrances are not decoupled*/) {
+    if (entrance->GetReverse() != nullptr && !Settings::DecoupleEntrances) {
       Entrance* assumedReturn = entrance->GetReverse()->AssumeReachable();
-      //mixed pool assumption stuff
+      if (!(Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF) && (Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL)))) {
+        auto type = entrance->GetType();
+        if (((type == EntranceType::Dungeon || type == EntranceType::GrottoGrave) && entrance->GetReverse()->GetName() != "Spirit Temple Lobby -> Desert Colossus From Spirit Lobby") ||
+             (type == EntranceType::Interior && Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL))) {
+               // In most cases, Dungeon, Grotto/Grave and Simple Interior exits shouldn't be assumed able to give access to their parent region
+               assumedReturn->SetCondition([]{return false;});
+             }
+      }
       assumedForward->BindTwoWay(assumedReturn);
     }
     assumedPool.push_back(assumedForward);
@@ -175,7 +182,7 @@ static void ChangeConnections(Entrance* entrance, Entrance* targetEntrance) {
   PlacementLog_Msg(message);
   entrance->Connect(targetEntrance->Disconnect());
   entrance->SetReplacement(targetEntrance->GetReplacement());
-  if (entrance->GetReverse() != nullptr /*&& entrances aren't decoupled*/) {
+  if (entrance->GetReverse() != nullptr && !Settings::DecoupleEntrances) {
     targetEntrance->GetReplacement()->GetReverse()->Connect(entrance->GetReverse()->GetAssumed()->Disconnect());
     targetEntrance->GetReplacement()->GetReverse()->SetReplacement(entrance->GetReverse());
   }
@@ -184,7 +191,7 @@ static void ChangeConnections(Entrance* entrance, Entrance* targetEntrance) {
 static void RestoreConnections(Entrance* entrance, Entrance* targetEntrance) {
   targetEntrance->Connect(entrance->Disconnect());
   entrance->SetReplacement(nullptr);
-  if (entrance->GetReverse() != nullptr /*&& entrances are not decoupled*/) {
+  if (entrance->GetReverse() != nullptr && !Settings::DecoupleEntrances) {
     entrance->GetReverse()->GetAssumed()->Connect(targetEntrance->GetReplacement()->GetReverse()->Disconnect());
     targetEntrance->GetReplacement()->GetReverse()->SetReplacement(nullptr);
   }
@@ -202,7 +209,7 @@ static void DeleteTargetEntrance(Entrance* targetEntrance) {
 
 static void ConfirmReplacement(Entrance* entrance, Entrance* targetEntrance) {
   DeleteTargetEntrance(targetEntrance);
-  if (entrance->GetReverse() != nullptr /*&& entrances are not decoupled*/) {
+  if (entrance->GetReverse() != nullptr && !Settings::DecoupleEntrances) {
     auto replacedReverse = targetEntrance->GetReplacement()->GetReverse();
     DeleteTargetEntrance(replacedReverse->GetReverse()->GetAssumed());
   }
@@ -264,11 +271,11 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
     return false;
   }
 
-  // if not world.decouple_entrances:
-  // Unless entrances are decoupled, we don't want the player to end up through certain entrances as the wrong age
-  // This means we need to hard check that none of the relevant entrances are ever reachable as that age
-  // This is mostly relevant when mixing entrance pools or shuffling special interiors (such as windmill or kak potion shop)
-  // Warp Songs and Overworld Spawns can also end up inside certain indoors so those need to be handled as well
+  if (!Settings::DecoupleEntrances) {
+    // Unless entrances are decoupled, we don't want the player to end up through certain entrances as the wrong age
+    // This means we need to hard check that none of the relevant entrances are ever reachable as that age
+    // This is mostly relevant when mixing entrance pools or shuffling special interiors (such as windmill or kak potion shop)
+    // Warp Songs and Overworld Spawns can also end up inside certain indoors so those need to be handled as well
     std::array<std::string, 2> childForbidden = {"OGC Great Fairy Fountain -> Castle Grounds", "GV Carpenter Tent -> GV Fortress Side"};
     std::array<std::string, 2> adultForbidden = {"HC Great Fairy Fountain -> Castle Grounds", "HC Storms Grotto -> Castle Grounds"};
 
@@ -308,6 +315,7 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
         }
       }
     }
+  }
 
   //check certain conditions when certain types of ER are enabled
   EntranceType type = EntranceType::None;
@@ -329,7 +337,7 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
     }
   }
 
-  if ((Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL) || Settings::ShuffleOverworldSpawns) && (entrancePlaced == nullptr /*|| world.mix_entrance_pools != 'off'*/ ||
+  if ((Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL) || Settings::ShuffleOverworldSpawns) && (entrancePlaced == nullptr || Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF) ||
   type == EntranceType::SpecialInterior || type == EntranceType::Overworld || type == EntranceType::Spawn || type == EntranceType::WarpSong || type == EntranceType::OwlDrop)) {
     //At least one valid starting region with all basic refills should be reachable without using any items at the beginning of the seed
     Logic::LogicReset();
@@ -380,7 +388,7 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
 
   // The Big Poe shop should always be accessible as adult without the need to use any bottles
   // This is important to ensure that players can never lock their only bottles by filling them with Big Poes they can't sell
-  if ((Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL)) && (entrancePlaced == nullptr /*|| world.mix_entrance_pools != 'off'*/ ||
+  if ((Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL)) && (entrancePlaced == nullptr || Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF) ||
   type == EntranceType::SpecialInterior || type == EntranceType::Overworld || type == EntranceType::Spawn || type == EntranceType::WarpSong || type == EntranceType::OwlDrop)) {
     Logic::LogicReset();
     GetAccessibleLocations({}, SearchMode::PoeCollectorAccess);
@@ -828,7 +836,7 @@ int ShuffleAllEntrances() {
     {{EntranceType::Overworld,       ZD_BEHIND_KING_ZORA,              ZORAS_FOUNTAIN,                        0x0225},
      {EntranceType::Overworld,       ZORAS_FOUNTAIN,                   ZD_BEHIND_KING_ZORA,                   0x01A1}},
 
- // {{EntranceType::Overworld,       GV_LOWER_STREAM,                  LAKE_HYLIA,                            0x0219}, NO_RETURN_ENTRANCE},
+    {{EntranceType::Overworld,       GV_LOWER_STREAM,                  LAKE_HYLIA,                            0x0219}, NO_RETURN_ENTRANCE},
 
     {{EntranceType::OwlDrop,         LH_OWL_FLIGHT,                    HYRULE_FIELD,                          0x027E}, NO_RETURN_ENTRANCE},
     {{EntranceType::OwlDrop,         DMT_OWL_FLIGHT,                   KAK_IMPAS_ROOFTOP,                     0x0554}, NO_RETURN_ENTRANCE},
@@ -889,8 +897,11 @@ int ShuffleAllEntrances() {
       FilterAndEraseFromPool(entrancePools[EntranceType::Dungeon], [](const Entrance* entrance){return entrance->GetParentRegionKey()    == KF_OUTSIDE_DEKU_TREE &&
                                                                                                        entrance->GetConnectedRegionKey() == DEKU_TREE_ENTRYWAY;});
     }
-
-    //decoupled entrances stuff
+    if (Settings::DecoupleEntrances) {
+      for (Entrance* entrance : entrancePools[EntranceType::Dungeon]) {
+        entrancePools[EntranceType::DungeonReverse].push_back(entrance->GetReverse());
+      }
+    }
   }
 
   //interior entrances
@@ -900,30 +911,54 @@ int ShuffleAllEntrances() {
     if (Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL)) {
       AddElementsToPool(entrancePools[EntranceType::Interior], GetShuffleableEntrances(EntranceType::SpecialInterior));
     }
-
-    //decoupled entrance stuff
+    if (Settings::DecoupleEntrances) {
+      for (Entrance* entrance : entrancePools[EntranceType::Interior]) {
+        entrancePools[EntranceType::InteriorReverse].push_back(entrance->GetReverse());
+      }
+    }
   }
 
   //grotto entrances
   if (Settings::ShuffleGrottoEntrances) {
     entrancePools[EntranceType::GrottoGrave] = GetShuffleableEntrances(EntranceType::GrottoGrave);
 
-    //decoupled entrance stuff
+    if (Settings::DecoupleEntrances) {
+      for (Entrance* entrance : entrancePools[EntranceType::GrottoGrave]) {
+        entrancePools[EntranceType::GrottoGraveReverse].push_back(entrance->GetReverse());
+      }
+    }
   }
 
   //overworld entrances
   if (Settings::ShuffleOverworldEntrances) {
-    bool excludeOverworldReverse = false; //mix_entrance_pools == all && !decouple_entrances
+    bool excludeOverworldReverse = Settings::MixedEntrancePools.Is(MIXEDENTRANCES_ALL) && !Settings::DecoupleEntrances;
     entrancePools[EntranceType::Overworld] = GetShuffleableEntrances(EntranceType::Overworld, excludeOverworldReverse);
-    // if not worlds[0].decouple_entrances:
-    //     entrance_pools['Overworld'].remove(world.get_entrance('GV Lower Stream -> Lake Hylia'))
+    // Only shuffle GV Lower Stream -> Lake Hylia if decoupled entrances are on
+    if (!Settings::DecoupleEntrances) {
+      FilterAndEraseFromPool(entrancePools[EntranceType::Overworld], [](const Entrance* entrance){return entrance->GetParentRegionKey()    == GV_LOWER_STREAM &&
+                                                                                                         entrance->GetConnectedRegionKey() == LAKE_HYLIA;});
+    }
   }
 
   //Set shuffled entrances as such
   SetShuffledEntrances(entrancePools);
   SetShuffledEntrances(oneWayEntrancePools);
 
-  //combine entrance pools if mixing pools
+  // Combine entrance pools if mixing pools
+  if (Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF)) {
+    for (auto& pool : entrancePools) {
+
+      auto type = pool.first;
+      // Don't mix in overworld entrances if the indoor mixed pools setting is selected and
+      // don't throw away the eventual mixed pool
+      if ((type == EntranceType::Mixed) || (type == EntranceType::Overworld && Settings::MixedEntrancePools.Is(MIXEDENTRANCES_INDOOR))) {
+        continue;
+      } else {
+        AddElementsToPool(entrancePools[EntranceType::Mixed], pool.second);
+        entrancePools[type].clear();
+      }
+    }
+  }
 
   //Build target entrance pools and set the assumption for entrances being reachable
   EntrancePools oneWayTargetEntrancePools = {};
@@ -1055,7 +1090,7 @@ void CreateEntranceOverrides() {
     s16 replacementDestinationIndex = -1;
     // Only set destination indices for two way entrances or when decouple entrances
     // is off
-    if (entrance->GetReverse() != nullptr /*|| !Settings::DecoupleEntrances*/) {
+    if (entrance->GetReverse() != nullptr && !Settings::DecoupleEntrances) {
       replacementDestinationIndex = entrance->GetReplacement()->GetReverse()->GetIndex();
       destinationIndex = entrance->GetReverse()->GetIndex();
     }

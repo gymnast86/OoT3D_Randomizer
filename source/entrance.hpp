@@ -20,11 +20,15 @@ enum class EntranceType {
     Spawn,
     WarpSong,
     Dungeon,
+    DungeonReverse,
     Interior,
+    InteriorReverse,
     SpecialInterior,
     GrottoGrave,
+    GrottoGraveReverse,
     Overworld,
     Extra,
+    Mixed,
     All,
 };
 

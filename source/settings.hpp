@@ -314,6 +314,8 @@ namespace Settings {
   extern Option ShuffleOwlDrops;
   extern Option ShuffleWarpSongs;
   extern Option ShuffleOverworldSpawns;
+  extern Option MixedEntrancePools;
+  extern Option DecoupleEntrances;
   extern Option BombchusInLogic;
   extern Option AmmoDrops;
   extern Option HeartDropRefill;
