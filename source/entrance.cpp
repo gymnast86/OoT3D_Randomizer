@@ -75,7 +75,7 @@ static std::vector<Entrance*> AssumeEntrancePool(std::vector<Entrance*>& entranc
       Entrance* assumedReturn = entrance->GetReverse()->AssumeReachable();
       if (!(Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF) && (Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL)))) {
         auto type = entrance->GetType();
-        if (((type == EntranceType::Dungeon || type == EntranceType::GrottoGrave) && entrance->GetReverse()->GetName() != "Spirit Temple Lobby -> Desert Colossus From Spirit Lobby") ||
+        if (((type == EntranceType::Dungeon || type == EntranceType::GrottoGrave) && entrance->GetReverse()->GetName() != "Spirit Temple Entryway -> Desert Colossus From Spirit Entryway") ||
              (type == EntranceType::Interior && Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL))) {
                // In most cases, Dungeon, Grotto/Grave and Simple Interior exits shouldn't be assumed able to give access to their parent region
                assumedReturn->SetCondition([]{return false;});
@@ -435,6 +435,8 @@ static bool PlaceOneWayPriorityEntrance(std::string priorityName, std::list<Area
   }
   Shuffle(availPool);
 
+  auto m = "availPool size: " + std::to_string(availPool.size());
+  CitraPrint(m);
   for (Entrance* entrance : availPool) {
     if (entrance->GetReplacement() != nullptr) {
       continue;
@@ -462,8 +464,11 @@ static bool PlaceOneWayPriorityEntrance(std::string priorityName, std::list<Area
       }
     }
   }
-  auto message = "ERROR: Unable to place priority one-way entrance for " + priorityName + "\n";
-  CitraPrint(message);
+  #ifdef ENABLE_DEBUG
+    auto message = "ERROR: Unable to place priority one-way entrance for " + priorityName + "\n";
+    CitraPrint(message);
+    PlacementLog_Write();
+  #endif
   return false;
 }
 
@@ -498,22 +503,26 @@ static bool ShuffleEntrances(std::vector<Entrance*>& entrances, std::vector<Entr
   return true;
 }
 
-static bool ShuffleOneWayPriorityEntrances(std::map<std::string, PriorityEntrance> oneWayPriorities, EntrancePools oneWayEntrancePools, EntrancePools oneWayTargetEntrancePools, int retryCount = 2) {
+static bool ShuffleOneWayPriorityEntrances(std::map<std::string, PriorityEntrance>& oneWayPriorities, EntrancePools oneWayEntrancePools, EntrancePools oneWayTargetEntrancePools, int retryCount = 2) {
   while (retryCount > 0) {
     retryCount--;
     std::vector<EntrancePair> rollbacks = {};
 
+    bool success = false;
     for (auto& priority : oneWayPriorities) {
       std::string key = priority.first;
       auto& regions = priority.second.targetRegions;
       auto& types = priority.second.allowedTypes;
-      bool success = PlaceOneWayPriorityEntrance(key, regions, types, rollbacks, oneWayEntrancePools, oneWayTargetEntrancePools);
+      success = PlaceOneWayPriorityEntrance(key, regions, types, rollbacks, oneWayEntrancePools, oneWayTargetEntrancePools);
       if (!success) {
         for (auto& pair : rollbacks) {
           RestoreConnections(pair.first, pair.second);
         }
-        continue;
+        break;
       }
+    }
+    if (!success) {
+      continue;
     }
     //If there are no issues, log the connections and continue
     for (auto& pair : rollbacks) {
@@ -842,8 +851,8 @@ int ShuffleAllEntrances() {
     {{EntranceType::OwlDrop,         DMT_OWL_FLIGHT,                   KAK_IMPAS_ROOFTOP,                     0x0554}, NO_RETURN_ENTRANCE},
 
     {{EntranceType::Spawn,           CHILD_SPAWN,                      KF_LINKS_HOUSE,                        0x00BB}, NO_RETURN_ENTRANCE},
-    {{EntranceType::Spawn,           ADULT_SPAWN,                      TEMPLE_OF_TIME,                        0x0282}, NO_RETURN_ENTRANCE}, //0x282 is an unused entrance index repurposed to differentiate between Adult Spawn and prelude of light (normally they both use 0x5F4)
-
+    {{EntranceType::Spawn,           ADULT_SPAWN,                      TEMPLE_OF_TIME,                        0x0282}, NO_RETURN_ENTRANCE}, // 0x282 is an unused entrance index repurposed to differentiate between
+                                                                                                                                            // Adult Spawn and prelude of light (normally they both use 0x5F4)
     {{EntranceType::WarpSong,        MINUET_OF_FOREST_WARP,            SACRED_FOREST_MEADOW,                  0x0600}, NO_RETURN_ENTRANCE},
     {{EntranceType::WarpSong,        BOLERO_OF_FIRE_WARP,              DMC_CENTRAL_LOCAL,                     0x04F6}, NO_RETURN_ENTRANCE},
     {{EntranceType::WarpSong,        SERENADE_OF_WATER_WARP,           LAKE_HYLIA,                            0x0604}, NO_RETURN_ENTRANCE},
