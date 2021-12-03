@@ -43,8 +43,7 @@ static s16 newGerudoTrainingGroundsEntrance = GERUDO_TRAINING_GROUNDS_ENTRANCE;
 static s16 newIceCavernEntrance             = ICE_CAVERN_ENTRANCE;
 
 u8 EntranceIsNull(EntranceOverride* entranceOverride) {
-    return entranceOverride->index == 0 /*&& entranceOverride->destination == 0*/ && entranceOverride->blueWarp == 0
-        && entranceOverride->override == 0 /*&& entranceOverride->overrideDestination == 0*/;
+    return entranceOverride->index == 0 && entranceOverride->blueWarp == 0 && entranceOverride->override == 0;
 }
 
 void Scene_Init(void) {
@@ -635,13 +634,13 @@ void SortEntranceList(EntranceOverride* entranceList, u8 byDest) {
     // Sort Source List
     int idx = 0;
     if (!byDest) {
-        for (size_t i = (byDest ? 2 : 0); i < SPOILER_ENTRANCE_GROUP_COUNT; i++) {
+        for (size_t i = 0; i < SPOILER_ENTRANCE_GROUP_COUNT; i++) {
             for (size_t j = 0; j < ENTRANCE_TYPE_COUNT; j++) {
                 for (size_t k = 0; k < ENTRANCE_OVERRIDES_MAX_COUNT; k++) {
                     if (EntranceIsNull(&tempList[k])) {
                         break;
                     }
-                    EntranceData* entranceData = GetEntranceData(byDest ? tempList[k].override : tempList[k].index);
+                    EntranceData* entranceData = GetEntranceData(tempList[k].index);
                     if (entranceData->group == i && entranceData->type == j) {
                         entranceList[idx] = tempList[k];
                         idx++;
@@ -697,5 +696,5 @@ void InitEntranceTrackingData(void) {
     for (size_t i = 0; i < ENTRANCE_OVERRIDES_MAX_COUNT; i++) {
         destList[i] = rEntranceOverrides[i];
     }
-    SortEntranceList(destList, 1);
+    // SortEntranceList(destList, 1);
 }

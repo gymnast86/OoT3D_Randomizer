@@ -477,7 +477,7 @@ static bool PlaceOneWayPriorityEntrance(std::string priorityName, std::list<Area
   }
   #ifdef ENABLE_DEBUG
     auto message = "ERROR: Unable to place priority one-way entrance for " + priorityName + "\n";
-    CitraPrint(message);
+    PlacementLog_Msg(message);
     PlacementLog_Write();
   #endif
   return false;
@@ -519,7 +519,7 @@ static bool ShuffleOneWayPriorityEntrances(std::map<std::string, PriorityEntranc
     retryCount--;
     std::vector<EntrancePair> rollbacks = {};
 
-    bool success = false;
+    bool success = true;
     for (auto& priority : oneWayPriorities) {
       std::string key = priority.first;
       auto& regions = priority.second.targetRegions;
@@ -543,7 +543,7 @@ static bool ShuffleOneWayPriorityEntrances(std::map<std::string, PriorityEntranc
   }
 
   if (retryCount <= 0) {
-    PlacementLog_Msg("Entrance placement attempt count for one way priorities exceeded. Restarting randomization completely");
+    PlacementLog_Msg("Entrance placement attempt count for one way priorities exceeded. Restarting randomization completely\n");
     entranceShuffleFailure = true;
     return false;
   }
@@ -1028,6 +1028,9 @@ int ShuffleAllEntrances() {
 
   // Place priority entrances
   ShuffleOneWayPriorityEntrances(oneWayPriorities, oneWayEntrancePools, oneWayTargetEntrancePools);
+  if (entranceShuffleFailure) {
+    return ENTRANCE_SHUFFLE_FAILURE;
+  }
 
   // Delete all targets that we just placed from one way target pools so
   // multiple one way entrances don't use the same target
@@ -1051,6 +1054,9 @@ int ShuffleAllEntrances() {
   // Shuffle all one way entrances among pools to shuffle
   for (auto& pool : oneWayEntrancePools) {
     ShuffleEntrancePool(pool.second, oneWayTargetEntrancePools[pool.first], 5);
+    if (entranceShuffleFailure) {
+      return ENTRANCE_SHUFFLE_FAILURE;
+    }
     // Delete all targets that we just placed from other one way target pools so
     // multiple one way entrances don't use the same target
     replacedEntrances = FilterFromPool(pool.second, [](Entrance* entrance){
