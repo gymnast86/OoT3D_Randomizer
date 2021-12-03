@@ -162,6 +162,7 @@ static std::array<std::vector<Entrance*>, 2> SplitEntrancesByRequirements(std::v
   return {restrictiveEntrances, softEntrances};
 }
 
+// Check and validate that an entrance is compatible to replace a specific target
 static bool AreEntrancesCompatible(Entrance* entrance, Entrance* target, std::vector<EntrancePair>& rollbacks) {
 
   // Entrances shouldn't connect to their own scene, fail in this situation
@@ -172,7 +173,17 @@ static bool AreEntrancesCompatible(Entrance* entrance, Entrance* target, std::ve
   }
 
   // One way entrances shouldn't lead to the same scene as other already chosen one way entrances
-
+  auto type = entrance->GetType();
+  const std::vector<EntranceType> oneWayTypes = {EntranceType::OwlDrop, EntranceType::Spawn, EntranceType::WarpSong};
+  if (ElementInContainer(type, oneWayTypes)) {
+    for (auto& rollback : rollbacks) {
+      if (rollback.first->GetConnectedRegion()->scene == target->GetConnectedRegion()->scene) {
+        auto message = "A one way entrance already leads to " + target->to_string() + ". Connection failed.\n";
+        PlacementLog_Msg(message);
+        return false;
+      }
+    }
+  }
   return true;
 }
 
