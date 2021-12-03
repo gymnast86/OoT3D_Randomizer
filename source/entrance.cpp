@@ -34,15 +34,15 @@ typedef struct {
     std::list<AreaKey> targetRegions;
     std::list<EntranceType> allowedTypes;
 } PriorityEntrance;
-                                 //primary,          secondary
+                                // Primary,          Secondary
 using EntranceInfoPair = std::pair<EntranceLinkInfo, EntranceLinkInfo>;
 using EntrancePair = std::pair<Entrance*, Entrance*>;
 using EntrancePools = std::map<EntranceType, std::vector<Entrance*>>;
 
-//The entrance randomization algorithm used here is a direct copy of
-//the algorithm used in the original N64 randomizer (except now in C++ instead
-//of python). It may be easier to understand the algorithm by looking at the
-//base randomizer's code instead:
+// The entrance randomization algorithm used here is a direct copy of
+// the algorithm used in the original N64 randomizer (except now in C++ instead
+// of python). It may be easier to understand the algorithm by looking at the
+// base randomizer's code instead:
 // https://github.com/TestRunnerSRL/OoT-Randomizer/blob/Dev/EntranceShuffle.py
 
 void SetAllEntrancesData(std::vector<EntranceInfoPair>& entranceShuffleTable) {
@@ -51,7 +51,7 @@ void SetAllEntrancesData(std::vector<EntranceInfoPair>& entranceShuffleTable) {
     auto& forwardEntry = entrancePair.first;
     auto& returnEntry = entrancePair.second;
 
-    //set data
+    // Set data
     Entrance* forwardEntrance = AreaTable(forwardEntry.parentRegion)->GetExit(forwardEntry.connectedRegion);
     forwardEntrance->SetIndex(forwardEntry.index);
     forwardEntrance->SetBlueWarp(forwardEntry.blueWarp);
@@ -112,9 +112,9 @@ static std::vector<Entrance*> BuildOneWayTargets(std::vector<EntranceType> types
   return newTargets;
 }
 
-//returns restrictive entrances and soft entrances in an array of size 2 (restrictive vector is index 0, soft is index 1)
+// Returns restrictive entrances and soft entrances in an array of size 2 (restrictive vector is index 0, soft is index 1)
 static std::array<std::vector<Entrance*>, 2> SplitEntrancesByRequirements(std::vector<Entrance*>& entrancesToSplit, std::vector<Entrance*>& assumedEntrances) {
-  //First, disconnect all root assumed entrances and save which regions they were originally connected to, so we can reconnect them later
+  // First, disconnect all root assumed entrances and save which regions they were originally connected to, so we can reconnect them later
   std::map<Entrance*, AreaKey> originalConnectedRegions = {};
   std::set<Entrance*> entrancesToDisconnect = {};
   for (Entrance* entrance : assumedEntrances) {
@@ -124,9 +124,9 @@ static std::array<std::vector<Entrance*>, 2> SplitEntrancesByRequirements(std::v
     }
   }
 
-  //disconnect each entrance temporarily to find restrictive vs soft entrances
-  //soft entrances are ones that can be accessed by both ages (child/adult) at both times of day (day/night)
-  //restrictive entrances are ones that do not meet this criteria
+  // Disconnect each entrance temporarily to find restrictive vs soft entrances
+  // Soft entrances are ones that can be accessed by both ages (child/adult) at both times of day (day/night)
+  // Restrictive entrances are ones that do not meet this criteria
   for (Entrance* entrance : entrancesToDisconnect) {
     if (entrance->GetConnectedRegionKey() != NONE) {
       originalConnectedRegions[entrance] = entrance->Disconnect();
@@ -137,16 +137,16 @@ static std::array<std::vector<Entrance*>, 2> SplitEntrancesByRequirements(std::v
   std::vector<Entrance*> softEntrances = {};
 
   Logic::LogicReset();
-  // //Apply the effects of all advancement items to search for entrance accessibility
+  // Apply the effects of all advancement items to search for entrance accessibility
   std::vector<ItemKey> items = FilterFromPool(ItemPool, [](const ItemKey i){ return ItemTable(i).IsAdvancement();});
   for (ItemKey unplacedItem : items) {
     ItemTable(unplacedItem).ApplyEffect();
   }
-  // run a search to see what's accessible
+  // Run a search to see what's accessible
   GetAccessibleLocations(allLocations);
 
   for (Entrance* entrance : entrancesToSplit) {
-    // if an entrance is accessible at all times of day by both ages, it's a soft entrance with no restrictions
+    // If an entrance is accessible at all times of day by both ages, it's a soft entrance with no restrictions
     if (entrance->ConditionsMet(true)) {
       softEntrances.push_back(entrance);
     } else {
@@ -154,7 +154,7 @@ static std::array<std::vector<Entrance*>, 2> SplitEntrancesByRequirements(std::v
     }
   }
 
-  //Reconnect all disconnected entrances
+  // Reconnect all disconnected entrances
   for (Entrance* entrance : entrancesToDisconnect) {
     entrance->Connect(originalConnectedRegions[entrance]);
   }
@@ -164,19 +164,19 @@ static std::array<std::vector<Entrance*>, 2> SplitEntrancesByRequirements(std::v
 
 static bool AreEntrancesCompatible(Entrance* entrance, Entrance* target, std::vector<EntrancePair>& rollbacks) {
 
-  //Entrances shouldn't connect to their own scene, fail in this situation
+  // Entrances shouldn't connect to their own scene, fail in this situation
   if (entrance->GetParentRegion()->scene != "" && entrance->GetParentRegion()->scene == target->GetConnectedRegion()->scene) {
     auto message = "Entrance " + entrance->GetName() + " attempted to connect with own scene target " + target->to_string() + ". Connection failed.\n";
     PlacementLog_Msg(message);
     return false;
   }
 
-  //one-way entrance stuff
+  // One way entrances shouldn't lead to the same scene as other already chosen one way entrances
 
   return true;
 }
 
-//Change connections between an entrance and a target assumed entrance, in order to test the connections afterwards if necessary
+// Change connections between an entrance and a target assumed entrance, in order to test the connections afterwards if necessary
 static void ChangeConnections(Entrance* entrance, Entrance* targetEntrance) {
   auto message = "Attempting to connect " + entrance->GetName() + " to " + targetEntrance->to_string() + "\n";
   PlacementLog_Msg(message);
@@ -243,7 +243,7 @@ static bool EntranceUnreachableAs(Entrance* entrance, u8 age, std::vector<Entran
   auto& parentEntrances = entrance->GetParentRegion()->entrances;
   for (Entrance* parentEntrance : parentEntrances) {
 
-    //if parentEntrance is in alreadyChecked, then continue
+    // If parentEntrance is in alreadyChecked, then continue
     if (ElementInContainer(parentEntrance, alreadyChecked)) {
       continue;
     }
@@ -317,7 +317,7 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
     }
   }
 
-  //check certain conditions when certain types of ER are enabled
+  // Check certain conditions when certain types of ER are enabled
   EntranceType type = EntranceType::None;
   if (entrancePlaced != nullptr) {
     type = entrancePlaced->GetType();
@@ -325,7 +325,7 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
 
   if (Settings::ShuffleInteriorEntrances.IsNot(SHUFFLEINTERIORS_OFF) && Settings::GossipStoneHints.IsNot(HINTS_NO_HINTS) &&
   (entrancePlaced == nullptr || type == EntranceType::Interior || type == EntranceType::SpecialInterior)) {
-    //When cows are shuffled, ensure both Impa's House entrances are in the same hint area because the cow is reachable from both sides
+    // When cows are shuffled, ensure both Impa's House entrances are in the same hint area because the cow is reachable from both sides
     if (Settings::ShuffleCows) {
       auto impasHouseFrontHintRegion = GetHintRegionHintKey(KAK_IMPAS_HOUSE);
       auto impasHouseBackHintRegion = GetHintRegionHintKey(KAK_IMPAS_HOUSE_BACK);
@@ -339,7 +339,7 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
 
   if ((Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL) || Settings::ShuffleOverworldSpawns) && (entrancePlaced == nullptr || Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF) ||
   type == EntranceType::SpecialInterior || type == EntranceType::Overworld || type == EntranceType::Spawn || type == EntranceType::WarpSong || type == EntranceType::OwlDrop)) {
-    //At least one valid starting region with all basic refills should be reachable without using any items at the beginning of the seed
+    // At least one valid starting region with all basic refills should be reachable without using any items at the beginning of the seed
     Logic::LogicReset();
     GetAccessibleLocations({});
     if (!AreaTable(KOKIRI_FOREST)->HasAccess() && !AreaTable(KAKARIKO_VILLAGE)->HasAccess()) {
@@ -347,7 +347,7 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
       return false;
     }
 
-    //Check that a region where time passes is always reachable as both ages without having collected any items
+    // Check that a region where time passes is always reachable as both ages without having collected any items
     Logic::LogicReset();
     GetAccessibleLocations({}, SearchMode::BothAgesNoItems);
     if (!Areas::HasTimePassAccess(AGE_CHILD) || !Areas::HasTimePassAccess(AGE_ADULT)) {
@@ -355,8 +355,8 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
       return false;
     }
 
-    //Check that the region is still accessible with the opposite starting time of day
-    //This is to ensure that time passing does not lock out access to all areas that can pass time
+    // Check that the region is still accessible with the opposite starting time of day
+    // This is to ensure that time passing does not lock out access to all areas that can pass time
     u8 startTime = Settings::StartingTime.Value<u8>();
     if (startTime == STARTINGTIME_DAY) {
       Settings::StartingTime.SetSelectedIndex(STARTINGTIME_NIGHT);
@@ -364,7 +364,7 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
       Settings::StartingTime.SetSelectedIndex(STARTINGTIME_DAY);
     }
 
-    //run the search again
+    // Run the search again
     Logic::LogicReset();
     GetAccessibleLocations({}, SearchMode::BothAgesNoItems);
     if (!Areas::HasTimePassAccess(AGE_CHILD) || !Areas::HasTimePassAccess(AGE_ADULT)) {
@@ -372,7 +372,7 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
       return false;
     }
 
-    //set the Starting Time setting back to what it originally was
+    // Set the Starting Time setting back to what it originally was
     Settings::StartingTime.SetSelectedIndex(startTime);
 
     // The player should be able to get back to ToT after going through time, without having collected any items
@@ -458,7 +458,7 @@ static bool PlaceOneWayPriorityEntrance(std::string priorityName, std::list<Area
       AreaKey targetRegionKey = target->GetConnectedRegionKey();
       if (targetRegionKey != NONE && ElementInContainer(targetRegionKey, allowedRegions)) {
         if (ReplaceEntrance(entrance, target, rollbacks)) {
-          // return once the entrance has been replaced
+          // Return once the entrance has been replaced
           return true;
         }
       }
@@ -477,7 +477,7 @@ static bool ShuffleEntrances(std::vector<Entrance*>& entrances, std::vector<Entr
 
   Shuffle(entrances);
 
-  //place all entrances in the pool, validating after every placement
+  // Place all entrances in the pool, validating after every placement
   for (Entrance* entrance : entrances) {
     if (entrance->GetConnectedRegionKey() != NONE) {
       continue;
@@ -499,7 +499,7 @@ static bool ShuffleEntrances(std::vector<Entrance*>& entrances, std::vector<Entr
     }
   }
 
-  //all entrances were validly connected
+  // All entrances were validly connected
   return true;
 }
 
@@ -524,7 +524,7 @@ static bool ShuffleOneWayPriorityEntrances(std::map<std::string, PriorityEntranc
     if (!success) {
       continue;
     }
-    //If there are no issues, log the connections and continue
+    // If there are no issues, log the connections and continue
     for (auto& pair : rollbacks) {
       ConfirmReplacement(pair.first, pair.second);
     }
@@ -557,8 +557,8 @@ static void ShuffleEntrancePool(std::vector<Entrance*>& entrancePool, std::vecto
 
     std::vector<EntrancePair> rollbacks = {};
 
-    //Shuffle Restrictive Entrances first while more regions are available in
-    //order to heavily reduce the chances of the placement failing
+    // Shuffle Restrictive Entrances first while more regions are available in
+    // order to heavily reduce the chances of the placement failing
     bool success = ShuffleEntrances(restrictiveEntrances, targetEntrances, rollbacks);
     if (success) {
       success = ShuffleEntrances(softEntrances, targetEntrances, rollbacks);
@@ -575,7 +575,7 @@ static void ShuffleEntrancePool(std::vector<Entrance*>& entrancePool, std::vecto
       continue;
     }
 
-    //If there are no issues, log the connections and continue
+    // If there are no issues, log the connections and continue
     for (auto& pair : rollbacks) {
       ConfirmReplacement(pair.first, pair.second);
     }
@@ -599,7 +599,7 @@ static void SetShuffledEntrances(EntrancePools entrancePools) {
   }
 }
 
-//Process for setting up the shuffling of all entrances to be shuffled
+// Process for setting up the shuffling of all entrances to be shuffled
 int ShuffleAllEntrances() {
 
   std::vector<EntranceInfoPair> entranceShuffleTable = {
@@ -897,7 +897,7 @@ int ShuffleAllEntrances() {
     }
   }
 
-  //Shuffle Dungeon Entrances
+  // Shuffle Dungeon Entrances
   if (Settings::ShuffleDungeonEntrances) {
     entrancePools[EntranceType::Dungeon] = GetShuffleableEntrances(EntranceType::Dungeon);
 
@@ -913,7 +913,7 @@ int ShuffleAllEntrances() {
     }
   }
 
-  //interior entrances
+  // Interior entrances
   if (Settings::ShuffleInteriorEntrances.IsNot(SHUFFLEINTERIORS_OFF)) {
     entrancePools[EntranceType::Interior] = GetShuffleableEntrances(EntranceType::Interior);
     //special interiors
@@ -927,7 +927,7 @@ int ShuffleAllEntrances() {
     }
   }
 
-  //grotto entrances
+  // Grotto entrances
   if (Settings::ShuffleGrottoEntrances) {
     entrancePools[EntranceType::GrottoGrave] = GetShuffleableEntrances(EntranceType::GrottoGrave);
 
@@ -938,7 +938,7 @@ int ShuffleAllEntrances() {
     }
   }
 
-  //overworld entrances
+  // Overworld entrances
   if (Settings::ShuffleOverworldEntrances) {
     bool excludeOverworldReverse = Settings::MixedEntrancePools.Is(MIXEDENTRANCES_ALL) && !Settings::DecoupleEntrances;
     entrancePools[EntranceType::Overworld] = GetShuffleableEntrances(EntranceType::Overworld, excludeOverworldReverse);
@@ -949,7 +949,7 @@ int ShuffleAllEntrances() {
     }
   }
 
-  //Set shuffled entrances as such
+  // Set shuffled entrances as such
   SetShuffledEntrances(entrancePools);
   SetShuffledEntrances(oneWayEntrancePools);
 
@@ -969,7 +969,7 @@ int ShuffleAllEntrances() {
     }
   }
 
-  //Build target entrance pools and set the assumption for entrances being reachable
+  // Build target entrance pools and set the assumption for entrances being reachable
   EntrancePools oneWayTargetEntrancePools = {};
   for (auto& pool : oneWayEntrancePools) {
 
@@ -1083,7 +1083,7 @@ void CreateEntranceOverrides() {
 
   for (Entrance* entrance : allShuffledEntrances) {
 
-    //Double-check to make sure the entrance is actually shuffled
+    // Double-check to make sure the entrance is actually shuffled
     if (!entrance->IsShuffled()) {
       continue;
     }
@@ -1097,7 +1097,7 @@ void CreateEntranceOverrides() {
 
     s16 destinationIndex = -1;
     s16 replacementDestinationIndex = -1;
-    // Only set destination indices for two way entrances or when decouple entrances
+    // Only set destination indices for two way entrances and when decouple entrances
     // is off
     if (entrance->GetReverse() != nullptr && !Settings::DecoupleEntrances) {
       replacementDestinationIndex = entrance->GetReplacement()->GetReverse()->GetIndex();
