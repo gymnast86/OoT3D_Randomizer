@@ -161,11 +161,14 @@ s16 Grotto_CheckSpecialEntrance(s16 nextEntranceIndex, u32 realIndexOnGrottoRetu
         gGlobalContext->fadeOutTransition = 3;
         gSaveContext.nextTransition = 3;
 
-        // Wwe want to return the actual entrance index in specific circumstances
+        // We want to return the actual entrance index in specific circumstances
         // such as overworld spawns and warp songs. Otherwise, we want to return
         // 0x7FFF to make the lighting of the area transition look correct.
         nextEntranceIndex = realIndexOnGrottoReturn ? grotto.entranceIndex : 0x7FFF;
         lastEntranceType = GROTTO_RETURN;
+        if (realIndexOnGrottoReturn) {
+            Grotto_ForceGrottoReturnOnSpecialEntrance();
+        }
         #ifdef ENABLE_DEBUG
             DebugPrintNumber("override: %04X\n", nextEntranceIndex);
             DebugPrintNumber("gSaveContext.entranceIndex: %04X\n", gSaveContext.entranceIndex);

@@ -81,8 +81,8 @@ extern EntranceTrackingData gEntranceTrackingData;
 
 void Entrance_Init(void);
 s16  Entrance_GetOverride(s16 index);
+s16  Entrance_OverrideNextIndexWithoutGrottoIndex(s16 nextEntranceIndex);
 s16  Entrance_OverrideNextIndex(s16 nextEntranceIndex);
-s16  Entrance_OverrideNextIndexAndGrottoReturn(s16 nextEntranceIndex);
 u32  Entrance_IsLostWoodsBridge(void);
 void Entrance_EnteredLocation(void);
 u32  Entrance_SceneAndSpawnAre(u8 scene, u8 spawn);

@@ -18,30 +18,26 @@ void DemoKankyo_rUpdate(Actor* thisx, GlobalContext* globalCtx) {
         globalCtx->fadeOutTransition = 5;
         switch (globalCtx->unk_2A91[0xEB]) { // text related variable
             case 0:
-                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndexAndGrottoReturn(0x0600); // Minuet
+                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndex(0x0600); // Minuet
                 break;
             case 1:
-                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndexAndGrottoReturn(0x04F6); // Bolero
+                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndex(0x04F6); // Bolero
                 break;
             case 2:
-                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndexAndGrottoReturn(0x0604); // Serenade
+                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndex(0x0604); // Serenade
                 break;
             case 3:
-                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndexAndGrottoReturn(0x01F1); // Requiem
+                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndex(0x01F1); // Requiem
                 break;
             case 4:
-                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndexAndGrottoReturn(0x0568); // Nocturne
+                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndex(0x0568); // Nocturne
                 break;
             case 5:
-                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndexAndGrottoReturn(0x05F4); // Prelude
+                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndex(0x05F4); // Prelude
                 break;
             default:
                 globalCtx->sceneLoadFlag = 0; // if something goes wrong, the animation plays normally
         }
-
-        // If one of the warp songs happens to lead to a grotto return, then we
-        // have to force the grotto return afterwards
-        Grotto_ForceGrottoReturnOnSpecialEntrance();
 
         if (gSaveContext.gameMode != 0) {
             // During DHWW the cutscene must play at the destination

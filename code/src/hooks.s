@@ -1153,7 +1153,7 @@ hook_SceneExitOverride:
     ldrsh r9, [r1,r0]
     push {r0-r8, r10-r12, lr}
     cpy r0, r9
-    bl Entrance_OverrideNextIndex
+    bl Entrance_OverrideNextIndexWithoutGrottoIndex
     cpy r9, r0
     pop {r0-r8, r10-r12, lr}
     bx lr
