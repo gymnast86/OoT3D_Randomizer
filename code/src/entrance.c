@@ -6,6 +6,8 @@
 #include "savefile.h"
 #include "common.h"
 #include "grotto.h"
+#include "../include/3ds/svc.h"
+#include "../include/lib/printf.h"
 
 typedef void (*SetNextEntrance_proc)(struct GlobalContext* globalCtx, s16 entranceIndex, u32 sceneLoadFlag, u32 transition);
 #define SetNextEntrance_addr 0x3716F0
@@ -43,7 +45,8 @@ static s16 newGerudoTrainingGroundsEntrance = GERUDO_TRAINING_GROUNDS_ENTRANCE;
 static s16 newIceCavernEntrance             = ICE_CAVERN_ENTRANCE;
 
 u8 EntranceIsNull(EntranceOverride* entranceOverride) {
-    return entranceOverride->index == 0 && entranceOverride->blueWarp == 0 && entranceOverride->override == 0;
+    return entranceOverride->index == 0 && entranceOverride->blueWarp == 0 && entranceOverride->override == 0 &&
+           entranceOverride->destination == 0 && entranceOverride->overrideDestination == 0;
 }
 
 void Scene_Init(void) {
@@ -84,7 +87,7 @@ static void Entrance_SeparateAdultSpawnAndPrelude() {
   // Overwrite unused entrance 0x0282 with values from 0x05F4 to use it as the
   // Adult Spawn index and separate it from Prelude of Light
   for (size_t i = 0; i < 4; ++i) {
-      gEntranceTable[0x3E8 + i] = gEntranceTable[0x340 + i];
+      gEntranceTable[0x282 + i] = gEntranceTable[0x5F4 + i];
   }
 }
 
@@ -598,6 +601,8 @@ EntranceData entranceData[] = {
     { 0x019D, "Zora's Domain" , "ZR" , ENTRANCE_GROUP_ZORAS_DOMAIN, ENTRANCE_TYPE_OVERWORLD },
     { 0x0225, "Zora's Domain" , "ZF" , ENTRANCE_GROUP_ZORAS_DOMAIN, ENTRANCE_TYPE_OVERWORLD },
     { 0x01A1, "ZF" , "Zora's Domain" , ENTRANCE_GROUP_ZORAS_DOMAIN, ENTRANCE_TYPE_OVERWORLD },
+    
+    { 0x0219, "GV Lower Stream", "Lake Hylia", ENTRANCE_GROUP_GERUDO_VALLEY, ENTRANCE_TYPE_OVERWORLD },
 
     { 0x027E, "LH Owl Flight" , "Hyrule Field" , ENTRANCE_GROUP_LAKE_HYLIA, ENTRANCE_TYPE_OWL_FLIGHT },
     { 0x0554, "DMT Owl Flight" , "Kakariko Village" , ENTRANCE_GROUP_DEATH_MOUNTAIN_TRAIL, ENTRANCE_TYPE_OWL_FLIGHT },
@@ -620,6 +625,9 @@ EntranceData* GetEntranceData(s16 index_) {
         }
     }
     // Shouldn't be reached
+    char buf[100];
+    int length = snprintf(buf, 40, "ERROR: EntranceData not found for %04x\n", index_);
+    svcOutputDebugString(buf, length);
     return 0;
 }
 
@@ -641,10 +649,12 @@ void SortEntranceList(EntranceOverride* entranceList, u8 byDest) {
                         break;
                     }
                     EntranceData* entranceData = GetEntranceData(tempList[k].index);
+                    // svcOutputDebugString("1", 1);
                     if (entranceData->group == i && entranceData->type == j) {
                         entranceList[idx] = tempList[k];
                         idx++;
                     }
+                    //svcOutputDebugString("3", 1);
                 }
             }
         }
