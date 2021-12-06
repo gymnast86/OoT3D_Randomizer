@@ -1200,6 +1200,14 @@ hook_OwlEntranceOverride:
     pop {r0, r2-r12, lr}
     b 0x3716F0
 
+.global hook_SavewarpSetRespawnFlag
+hook_SavewarpSetRespawnFlag:
+    push {r0-r12, lr}
+    bl Grotto_ForceGrottoReturnOnSpecialEntrance
+    pop {r0-r12, lr}
+    mov r0,#0xFF
+    bx lr
+
 .section .loader
 .global hook_into_loader
 hook_into_loader:

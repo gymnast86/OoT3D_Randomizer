@@ -1076,6 +1076,10 @@ SECTIONS
 		*(.patch_SaveFile_Init)
 	}
 
+	.patch_SavewarpSetRespawnFlag 0x449E40 : {
+		*(.patch_SavewarpSetRespawnFlag)
+	}
+
 	.patch_GetCustomMessageEntryTwo 0x44D564 : {
 		*(.patch_GetCustomMessageEntryTwo)
 	}

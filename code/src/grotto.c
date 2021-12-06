@@ -130,7 +130,7 @@ static void Grotto_SetupReturnInfo(GrottoReturnInfo grotto, RespawnMode respawnM
 
 // Translates and overrides the passed in entrance index if it corresponds to a
 // special grotto entrance (grotto load or returnpoint)
-s16 Grotto_CheckSpecialEntrance(s16 nextEntranceIndex) {
+s16 Grotto_CheckSpecialEntrance(s16 nextEntranceIndex, u32 realIndexOnGrottoReturn) {
 
     // Don't change anything unless grotto shuffle has been enabled
     if (gSettingsContext.shuffleGrottoEntrances == OFF) {
@@ -161,13 +161,15 @@ s16 Grotto_CheckSpecialEntrance(s16 nextEntranceIndex) {
         gGlobalContext->fadeOutTransition = 3;
         gSaveContext.nextTransition = 3;
 
-        // If this entrance is triggered by Link falling into a grotto actor
-        // and then spawning at a grotto return point, we want to return the
-        // regular entrance index so that it works properly. Otherwise, we
-        // want to return 0x7FFF to make the lighting of the area transition
-        // look correct.
-        nextEntranceIndex = (lastEntranceType == GROTTO_LOAD) ? grotto.entranceIndex : 0x7FFF;
+        // Wwe want to return the actual entrance index in specific circumstances
+        // such as overworld spawns and warp songs. Otherwise, we want to return
+        // 0x7FFF to make the lighting of the area transition look correct.
+        nextEntranceIndex = realIndexOnGrottoReturn ? grotto.entranceIndex : 0x7FFF;
         lastEntranceType = GROTTO_RETURN;
+        #ifdef ENABLE_DEBUG
+            DebugPrintNumber("override: %04X\n", nextEntranceIndex);
+            DebugPrintNumber("gSaveContext.entranceIndex: %04X\n", gSaveContext.entranceIndex);
+        #endif
 
     // Grotto Loads
     } else if (nextEntranceIndex >= 0x1000 && nextEntranceIndex < 0x2000) {
@@ -209,7 +211,7 @@ void Grotto_OverrideActorEntrance(Actor* thisx) {
 
             // Run the index through the special entrances override check
             lastEntranceType = GROTTO_LOAD;
-            gGlobalContext->nextEntranceIndex = Grotto_CheckSpecialEntrance(index);
+            gGlobalContext->nextEntranceIndex = Grotto_CheckSpecialEntrance(index, 1);
             return;
         }
     }
@@ -224,6 +226,17 @@ void Grotto_ForceGrottoReturn(void) {
         //Save the current temp flags in the grotto return point, so they'll properly keep their values.
         gSaveContext.respawn[RESPAWN_MODE_RETURN].tempSwchFlags = gGlobalContext->actorCtx.flags.tempSwch;
         gSaveContext.respawn[RESPAWN_MODE_RETURN].tempCollectFlags = gGlobalContext->actorCtx.flags.tempCollect;
+    }
+}
+
+// Set necessary flags for when warp songs/overworld spawns are shuffled to grotto return points
+void Grotto_ForceGrottoReturnOnSpecialEntrance(void) {
+    if (lastEntranceType == GROTTO_RETURN && gSettingsContext.shuffleGrottoEntrances == ON) {
+        gSaveContext.respawnFlag = 2;
+        gSaveContext.respawn[RESPAWN_MODE_RETURN].playerParams = 0x4FF;
+        // Clear current temp flags
+        gSaveContext.respawn[RESPAWN_MODE_RETURN].tempSwchFlags = 0;
+        gSaveContext.respawn[RESPAWN_MODE_RETURN].tempCollectFlags = 0;
     }
 }
 

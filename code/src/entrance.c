@@ -200,12 +200,19 @@ s16 Entrance_GetOverride(s16 index) {
 
 s16 Entrance_OverrideNextIndex(s16 nextEntranceIndex) {
     SaveFile_SetEntranceDiscovered(nextEntranceIndex);
-    return Grotto_CheckSpecialEntrance(Entrance_GetOverride(nextEntranceIndex));
+    return Grotto_CheckSpecialEntrance(Entrance_GetOverride(nextEntranceIndex), 0);
+}
+
+// Additional function definition to allow returning the default entrance index
+// for a grotto return point in specific circumstances instead of 0x7FFF
+s16 Entrance_OverrideNextIndexAndGrottoReturn(s16 nextEntranceIndex) {
+    SaveFile_SetEntranceDiscovered(nextEntranceIndex);
+    return Grotto_CheckSpecialEntrance(Entrance_GetOverride(nextEntranceIndex), 1);
 }
 
 void Entrance_OverrideDynamicExit(void) {
     SaveFile_SetEntranceDiscovered(gGlobalContext->nextEntranceIndex);
-    gGlobalContext->nextEntranceIndex = Grotto_CheckSpecialEntrance(Entrance_GetOverride(gGlobalContext->nextEntranceIndex));
+    gGlobalContext->nextEntranceIndex = Grotto_CheckSpecialEntrance(Entrance_GetOverride(gGlobalContext->nextEntranceIndex), 0);
 }
 
 void Entrance_DeathInGanonBattle(void) {
@@ -313,9 +320,9 @@ void Entrance_SetSavewarpEntrance(void) {
     } else if (scene == DUNGEON_GERUDO_FORTRESS) {
         gSaveContext.entranceIndex = 0x0486; // Gerudo Fortress -> Thieve's Hideout spawn 0
     } else if (gSaveContext.linkAge == AGE_CHILD) {
-        gSaveContext.entranceIndex = Entrance_OverrideNextIndex(0x00BB); // Child Overworld Spawn
+        gSaveContext.entranceIndex = Entrance_OverrideNextIndexAndGrottoReturn(0x00BB); // Child Overworld Spawn
     } else {
-        gSaveContext.entranceIndex = Entrance_OverrideNextIndex(0x0282); // Adult Overworld Spawn (Normally 0x5F4, but 0x282 has been repurposed to differentiate from Prelude which also uses 0x5F4)
+        gSaveContext.entranceIndex = Entrance_OverrideNextIndexAndGrottoReturn(0x0282); // Adult Overworld Spawn (Normally 0x5F4, but 0x282 has been repurposed to differentiate from Prelude which also uses 0x5F4)
     }
 }
 

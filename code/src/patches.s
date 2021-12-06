@@ -1738,6 +1738,11 @@ DMTOwlEntranceOverride_patch:
 LHOwlEntranceOverride_patch:
     b hook_OwlEntranceOverride
 
+.section .patch_SavewarpSetRespawnFlag
+.global SavewarpSetRespawnFlag_patch
+SavewarpSetRespawnFlag_patch:
+    bl hook_SavewarpSetRespawnFlag
+
 .section .patch_loader
 .global loader_patch
 
