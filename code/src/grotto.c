@@ -2,6 +2,7 @@
 #include "grotto.h"
 #include "savefile.h"
 #include "settings.h"
+#include "common.h"
 
 // Information necessary for entering each grotto
 static const GrottoLoadInfo grottoLoadTable[NUM_GROTTOS] = {
@@ -139,8 +140,14 @@ s16 Grotto_CheckSpecialEntrance(s16 nextEntranceIndex) {
     // Grotto Returns
     if (nextEntranceIndex >= 0x2000 && nextEntranceIndex < 0x2000 + NUM_GROTTOS) {
 
+        #ifdef ENABLE_DEBUG
+            DebugPrintNumber("Grotto ID: %02x\n", grottoId);
+            DebugPrintNumber("nextEntranceIndex: %04X\n", nextEntranceIndex);
+        #endif
+
         GrottoReturnInfo grotto = grottoReturnTable[grottoId];
         Grotto_SetupReturnInfo(grotto, RESPAWN_MODE_DOWN);
+        Grotto_SetupReturnInfo(grotto, RESPAWN_MODE_RETURN);
         gGlobalContext->fadeOutTransition = 3;
         gSaveContext.nextTransition = 3;
 

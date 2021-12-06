@@ -6,8 +6,6 @@
 #include "savefile.h"
 #include "common.h"
 #include "grotto.h"
-#include "../include/3ds/svc.h"
-#include "../include/lib/printf.h"
 
 typedef void (*SetNextEntrance_proc)(struct GlobalContext* globalCtx, s16 entranceIndex, u32 sceneLoadFlag, u32 transition);
 #define SetNextEntrance_addr 0x3716F0
@@ -601,7 +599,7 @@ EntranceData entranceData[] = {
     { 0x019D, "Zora's Domain" , "ZR" , ENTRANCE_GROUP_ZORAS_DOMAIN, ENTRANCE_TYPE_OVERWORLD },
     { 0x0225, "Zora's Domain" , "ZF" , ENTRANCE_GROUP_ZORAS_DOMAIN, ENTRANCE_TYPE_OVERWORLD },
     { 0x01A1, "ZF" , "Zora's Domain" , ENTRANCE_GROUP_ZORAS_DOMAIN, ENTRANCE_TYPE_OVERWORLD },
-    
+
     { 0x0219, "GV Lower Stream", "Lake Hylia", ENTRANCE_GROUP_GERUDO_VALLEY, ENTRANCE_TYPE_OVERWORLD },
 
     { 0x027E, "LH Owl Flight" , "Hyrule Field" , ENTRANCE_GROUP_LAKE_HYLIA, ENTRANCE_TYPE_OWL_FLIGHT },
@@ -625,9 +623,9 @@ EntranceData* GetEntranceData(s16 index_) {
         }
     }
     // Shouldn't be reached
-    char buf[100];
-    int length = snprintf(buf, 40, "ERROR: EntranceData not found for %04x\n", index_);
-    svcOutputDebugString(buf, length);
+    #ifdef ENABLE_DEBUG
+        DebugPrintNumber("ERROR: EntranceData not found for %04x\n", index_);
+    #endif
     return 0;
 }
 
@@ -704,5 +702,5 @@ void InitEntranceTrackingData(void) {
     for (size_t i = 0; i < ENTRANCE_OVERRIDES_MAX_COUNT; i++) {
         destList[i] = rEntranceOverrides[i];
     }
-    // SortEntranceList(destList, 1);
+    SortEntranceList(destList, 1);
 }
