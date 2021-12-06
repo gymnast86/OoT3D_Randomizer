@@ -996,11 +996,11 @@ int ShuffleAllEntrances() {
       }
 
     } else if (poolType == EntranceType::Spawn) {
-      validTargetTypes = {EntranceType::Spawn, EntranceType::WarpSong, EntranceType::OwlDrop, EntranceType::Overworld, EntranceType::Interior, EntranceType::SpecialInterior, EntranceType::Extra};
+      validTargetTypes = {EntranceType::Spawn, EntranceType::WarpSong, EntranceType::OwlDrop, EntranceType::Overworld, EntranceType::Interior, EntranceType::SpecialInterior, EntranceType::GrottoGrave, EntranceType::Extra};
       oneWayTargetEntrancePools[poolType] = BuildOneWayTargets(validTargetTypes);
 
     } else if (poolType == EntranceType::WarpSong) {
-      validTargetTypes = {EntranceType::Spawn, EntranceType::WarpSong, EntranceType::OwlDrop, EntranceType::Overworld, EntranceType::Interior, EntranceType::SpecialInterior, EntranceType::Extra};
+      validTargetTypes = {EntranceType::Spawn, EntranceType::WarpSong, EntranceType::OwlDrop, EntranceType::Overworld, EntranceType::Interior, EntranceType::SpecialInterior, EntranceType::GrottoGrave, EntranceType::Extra};
       oneWayTargetEntrancePools[poolType] = BuildOneWayTargets(validTargetTypes);
     }
     // for target in one_way_target_entrance_pools[pool_type]:
