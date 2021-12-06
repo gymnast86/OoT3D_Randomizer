@@ -198,16 +198,16 @@ s16 Entrance_GetOverride(s16 index) {
     return entranceOverrideTable[index];
 }
 
-s16 Entrance_OverrideNextIndexWithoutGrottoIndex(s16 nextEntranceIndex) {
-    SaveFile_SetEntranceDiscovered(nextEntranceIndex);
-    return Grotto_CheckSpecialEntrance(Entrance_GetOverride(nextEntranceIndex), 0);
-}
-
-// Additional function definition to allow returning the default entrance index
-// for a grotto return point in specific circumstances instead of 0x7FFF
 s16 Entrance_OverrideNextIndex(s16 nextEntranceIndex) {
     SaveFile_SetEntranceDiscovered(nextEntranceIndex);
     return Grotto_CheckSpecialEntrance(Entrance_GetOverride(nextEntranceIndex), 1);
+}
+
+// Additional function definition to specify not returning the default index of
+// a grotto return point and instead just returning 0x7FFF
+s16 Entrance_OverrideNextIndexWithoutGrottoIndex(s16 nextEntranceIndex) {
+    SaveFile_SetEntranceDiscovered(nextEntranceIndex);
+    return Grotto_CheckSpecialEntrance(Entrance_GetOverride(nextEntranceIndex), 0);
 }
 
 void Entrance_OverrideDynamicExit(void) {
@@ -361,11 +361,28 @@ u8 EntranceCutscene_ShouldPlay(u8 flag) {
 
 void Entrance_CheckEpona() {
     s32 entrance = gGlobalContext->nextEntranceIndex;
-    s8 dest = gEntranceTable[entrance].scene;
-    //If Link is riding Epona but he's about to enter a scene where she can't spawn,
+    //If Link is riding Epona but he's about to go through an entrance where she can't spawn,
     //unset the Epona flag to avoid Master glitch, and restore temp B.
-    if (gSettingsContext.shuffleOverworldEntrances && entrance != 0x496 && (PLAYER->stateFlags1 & 0x00800000) &&
-        dest != 81 && dest != 87 && dest != 90 && dest != 93 && dest != 99) {
+    if (gSettingsContext.shuffleOverworldEntrances && (PLAYER->stateFlags1 & 0x00800000)) {
+
+        static const s16 validEponaEntrances[9] = {
+            0x0102, // Hyrule Field -> Lake Hylia
+            0x0189, // Lake Hylia -> Hyrule Field
+            0x0117, // Hyrule Field -> Gerudo Valley
+            0x018D, // Gerudo Valley -> Hyrule Field
+            0x0157, // Hyrule Field -> Lon Lon Ranch
+            0x01F9, // Lon Lon Ranch -> Hyrule Field
+            0x0129, // GV Fortress Side -> Gerudo Fortress
+            0x022D, // Gerudo Fortress -> GV Fortress Side
+            0x0496, // Gerudo Fortress -> Thieves Hideout
+        };
+        for (size_t i = 0; i < 9; i++) {
+            // If the entrance is equal to any of the valid ones, return and
+            // don't change anything
+            if (entrance == validEponaEntrances[i]) {
+                return;
+            }
+        }
         gStaticContext.spawnOnEpona = 0;
         gSaveContext.equips.buttonItems[0] = gSaveContext.buttonStatus[0]; //"temp B"
     }
