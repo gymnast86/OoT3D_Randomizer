@@ -649,12 +649,10 @@ void SortEntranceList(EntranceOverride* entranceList, u8 byDest) {
                         break;
                     }
                     EntranceData* entranceData = GetEntranceData(tempList[k].index);
-                    // svcOutputDebugString("1", 1);
                     if (entranceData->group == i && entranceData->type == j) {
                         entranceList[idx] = tempList[k];
                         idx++;
                     }
-                    //svcOutputDebugString("3", 1);
                 }
             }
         }
