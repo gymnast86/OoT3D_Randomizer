@@ -82,11 +82,11 @@ static void Entrance_SeparateOGCFairyFountainExit() {
 }
 
 static void Entrance_SeparateAdultSpawnAndPrelude() {
-  // Overwrite unused entrance 0x0282 with values from 0x05F4 to use it as the
-  // Adult Spawn index and separate it from Prelude of Light
-  for (size_t i = 0; i < 4; ++i) {
-      gEntranceTable[0x282 + i] = gEntranceTable[0x5F4 + i];
-  }
+    // Overwrite unused entrance 0x0282 with values from 0x05F4 to use it as the
+    // Adult Spawn index and separate it from Prelude of Light
+    for (size_t i = 0; i < 4; ++i) {
+        gEntranceTable[0x282 + i] = gEntranceTable[0x5F4 + i];
+    }
 }
 
 void Entrance_Init(void) {
@@ -166,7 +166,7 @@ void Entrance_Init(void) {
 
         s16 indicesToSilenceBackgroundMusic[2] = {
             // The lost woods music playing near the GC Woods Warp keeps playing
-            // in the next area if the bvackground music is allowed to keep playing
+            // in the next area if the background music is allowed to keep playing
             entranceOverrideTable[0x04D6], // Goron City -> Lost Woods override
 
             // If Malon is singing at night, then her singing will be transferred
@@ -174,7 +174,7 @@ void Entrance_Init(void) {
             entranceOverrideTable[0x025A], // Castle Grounds -> Market override
         };
 
-        for (size_t j = 0; j < sizeof(indicesToSilenceBackgroundMusic) / sizeof(s16); j++) {
+        for (size_t j = 0; j < ARRAY_SIZE(indicesToSilenceBackgroundMusic); j++) {
 
             s16 override = indicesToSilenceBackgroundMusic[j];
             for (s16 i = 0; i < 4; i++) {
@@ -248,6 +248,9 @@ void Entrance_EnteredLocation(void) {
 //randomizer. It's easier to rewrite this entirely compared to performing an ASM
 //dance for just the boss rooms. Entrance Indexes can be found here:
 //https://wiki.cloudmodding.com/oot/Entrance_Table_(Data)
+
+// NOTE: This code isn't strictly necessary at the moment, but will be useful to
+// keep around if we ever decide to randomize loading zones to boss rooms
 void Entrance_SetGameOverEntrance(void) {
 
     //Set the current entrance depending on which entrance the player last came through

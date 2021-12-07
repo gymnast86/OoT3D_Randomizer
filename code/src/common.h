@@ -5,6 +5,8 @@
 #include "../include/3ds/svc.h"
 #include "../include/lib/printf.h"
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+
 #define SEQ_AUDIO_BLANK 0x1000142
 
 u32 Hash(u32);
