@@ -3837,7 +3837,6 @@ namespace Areas {
     ROOT,
     ROOT_EXITS,
 
-    // Below is ordered for entrance tracker groups
     CHILD_SPAWN,
     ADULT_SPAWN,
     MINUET_OF_FOREST_WARP,
@@ -4017,7 +4016,6 @@ namespace Areas {
     GANONS_CASTLE_GROUNDS,
     OGC_GREAT_FAIRY_FOUNTAIN,
     GANONS_CASTLE_ENTRYWAY,
-    // Above is ordered for entrance tracker groups
 
     DEKU_TREE_LOBBY,
     DEKU_TREE_SLINGSHOT_ROOM,

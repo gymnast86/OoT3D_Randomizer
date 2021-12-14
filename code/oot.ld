@@ -1160,6 +1160,10 @@ SECTIONS
 		*(.patch_InterfaceDrawDontSpoilTradeItems)
 	}
 
+	.patch_SunsSongEndCloseTextbox 0x45B514 : {
+		*(.patch_SunsSongEndCloseTextbox)
+	}
+
 	.patch_SetSunsSongRespawnFlag 0x45B660 : {
 		*(.patch_SetSunsSongRespawnFlag)
 	}

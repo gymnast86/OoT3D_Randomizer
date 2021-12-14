@@ -66,6 +66,8 @@ typedef struct {
     char* destination;
     SpoilerEntranceGroup group;
     TrackerEntranceType type;
+    u32 color;
+    u8 oneExit;
 } EntranceData;
 
 typedef struct {
@@ -74,7 +76,6 @@ typedef struct {
     u16 GroupOffsets[SPOILER_ENTRANCE_GROUP_COUNT];
 } EntranceTrackingData;
 
-extern EntranceData entranceData[ENTRANCE_OVERRIDES_MAX_COUNT];
 extern EntranceOverride rEntranceOverrides[ENTRANCE_OVERRIDES_MAX_COUNT];
 extern EntranceOverride destList[ENTRANCE_OVERRIDES_MAX_COUNT];
 extern EntranceTrackingData gEntranceTrackingData;
@@ -87,7 +88,7 @@ u32  Entrance_IsLostWoodsBridge(void);
 void Entrance_EnteredLocation(void);
 u32  Entrance_SceneAndSpawnAre(u8 scene, u8 spawn);
 /// Returns entrance data of the specified index
-EntranceData* GetEntranceData(s16 index_);
+const EntranceData* GetEntranceData(s16 index_);
 void InitEntranceTrackingData(void);
 
 #endif //_ENTRANCE_H_
