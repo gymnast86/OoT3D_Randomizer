@@ -101,15 +101,18 @@ static char *spoilerCollectionGroupNames[] = {
 
 static char* spoilerEntranceGroupNames[] = {
     "Randomized Entrances", // All
-    "Spawns and Warp Songs",
+    "Spawns/Warp Songs/Owls",
     "Kokiri Forest",
     "Lost Woods",
+    "Sacred Forest Meadow",
     "Kakariko Village",
     "Graveyard",
     "Death Mountain Trail",
     "Death Mountain Crater",
     "Goron City",
+    "Zora's River",
     "Zora's Domain",
+    "Zora's Fountain",
     "Hyrule Field",
     "Lon Lon Ranch",
     "Lake Hylia",
@@ -619,18 +622,18 @@ static void Gfx_DrawEntranceTracker(void) {
 
         bool isDiscovered = IsEntranceDiscovered(entranceList[locIndex].index);
 
-        EntranceData* original = GetEntranceData(entranceList[locIndex].index);
-        EntranceData* override = GetEntranceData(entranceList[locIndex].override);
-        
-        u32 origSrcColor = isDiscovered ? original->color : COLOR_WHITE;
-        u32 origDstColor = isDiscovered ? original->color : COLOR_WHITE;
-        u32 rplcSrcColor = isDiscovered ? override->color : COLOR_WHITE;
-        u32 rplcDstColor = isDiscovered ? override->color : COLOR_WHITE;
+        const EntranceData* original = GetEntranceData(entranceList[locIndex].index);
+        const EntranceData* override = GetEntranceData(entranceList[locIndex].override);
+
+        u32 origSrcColor = gSettingsContext.ingameSpoilers || isDiscovered ? original->color : COLOR_WHITE;
+        u32 origDstColor = gSettingsContext.ingameSpoilers || isDiscovered ? original->color : COLOR_WHITE;
+        u32 rplcSrcColor = gSettingsContext.ingameSpoilers || isDiscovered ? override->color : COLOR_WHITE;
+        u32 rplcDstColor = gSettingsContext.ingameSpoilers || isDiscovered ? override->color : COLOR_WHITE;
+
+        u8 showOriginal = gSettingsContext.ingameSpoilers || (!destListToggle || original->group == ENTRANCE_GROUP_ONE_WAY) || isDiscovered;
+        u8 showOverride = gSettingsContext.ingameSpoilers || ( destListToggle && original->group != ENTRANCE_GROUP_ONE_WAY) || isDiscovered;
+
         const char* unknown = "???";
-
-        u8 showOriginal = gSettingsContext.ingameSpoilers || (!destListToggle || original->group == ENTRANCE_GROUP_ROOT_EXITS) || isDiscovered;
-        u8 showOverride = gSettingsContext.ingameSpoilers || ( destListToggle && original->group != ENTRANCE_GROUP_ROOT_EXITS) || isDiscovered;
-
         const char* origSrcName = showOriginal ? original->source      : unknown;
         const char* origDstName = showOriginal ? original->destination : unknown;
         const char* rplcSrcName = showOverride ? override->source      : unknown;
@@ -639,15 +642,20 @@ static void Gfx_DrawEntranceTracker(void) {
         u16 offsetX = 0;
         Draw_DrawFormattedString_Small(10, locPosY, origSrcColor, "%s", origSrcName);
         offsetX += strlen(origSrcName) + 1;
-        Draw_DrawFormattedString_Small(10 + offsetX * SPACING_SMALL_X, locPosY, COLOR_WHITE, "to");
-        offsetX += strlen("to") + 1;
-        Draw_DrawFormattedString_Small(10 + offsetX * SPACING_SMALL_X, locPosY, origDstColor, "%s", origDstName);
-        offsetX += strlen(origDstName) + 1;
+        // Don't show original destinations for one way entrances
+        if (original->group != ENTRANCE_GROUP_ONE_WAY) {
+            Draw_DrawFormattedString_Small(10 + offsetX * SPACING_SMALL_X, locPosY, COLOR_WHITE, "to");
+            offsetX += strlen("to") + 1;
+            Draw_DrawFormattedString_Small(10 + offsetX * SPACING_SMALL_X, locPosY, origDstColor, "%s", origDstName);
+            offsetX += strlen(origDstName) + 1;
+        }
         Draw_DrawFormattedString_Small(10 + offsetX * SPACING_SMALL_X, locPosY, COLOR_WHITE, "%c", RIGHT_ARROW_CHR);
 
         offsetX = 2;
         Draw_DrawFormattedString_Small(10 + offsetX * SPACING_SMALL_X, entrPosY, rplcDstColor, "%s", rplcDstName);
-        if (!isDiscovered || !GetEntranceData(entranceList[locIndex].overrideDestination)->oneExit) {
+        // Showing the source area for a destination with a single entrance is unnecessary
+        // This will mostly be interiors, grottos, and dungeons
+        if ((!showOverride || !override->isOnlyAreaEntrance) && override->group != ENTRANCE_GROUP_ONE_WAY) {
             offsetX += strlen(rplcDstName) + 1;
             Draw_DrawFormattedString_Small(10 + offsetX * SPACING_SMALL_X, entrPosY, COLOR_WHITE, "from");
             offsetX += strlen("from") + 1;
