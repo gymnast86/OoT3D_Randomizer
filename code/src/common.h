@@ -13,6 +13,6 @@ u32 Hash(u32);
 u8  Bias(u32);
 
 u8 IsInGame(void);
-void DebugPrintNumber(const char*, int);
+void DebugPrintNumber(const char *, int);
 
 #endif //_COMMON_H_
