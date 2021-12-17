@@ -213,7 +213,7 @@ s16 Entrance_OverrideNextIndexWithoutGrottoIndex(s16 nextEntranceIndex) {
 
 void Entrance_OverrideDynamicExit(void) {
     SaveFile_SetEntranceDiscovered(gGlobalContext->nextEntranceIndex);
-    gGlobalContext->nextEntranceIndex = Grotto_CheckSpecialEntrance(Entrance_GetOverride(gGlobalContext->nextEntranceIndex), 0);
+    gGlobalContext->nextEntranceIndex = Grotto_CheckSpecialEntrance(Entrance_GetOverride(gGlobalContext->nextEntranceIndex), 1);
 }
 
 void Entrance_DeathInGanonBattle(void) {
