@@ -102,9 +102,9 @@ Area::Area(std::string regionName_, std::string scene_, u32 hintKey_,
 
 Area::~Area() = default;
 
-bool Area::UpdateEvents() {
+bool Area::UpdateEvents(SearchMode mode) {
 
-  if (timePass) {
+  if (timePass && mode != SearchMode::TimePassAccess) {
     if (Child()) {
       childDay = true;
       childNight = true;

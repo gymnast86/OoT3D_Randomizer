@@ -271,16 +271,22 @@ static bool EntranceUnreachableAs(Entrance* entrance, u8 age, std::vector<Entran
 static bool ValidateWorld(Entrance* entrancePlaced) {
   PlacementLog_Msg("Validating world\n");
 
-  // Check to make sure all locations are still reachable
+  // Check certain conditions when certain types of ER are enabled
+  EntranceType type = EntranceType::None;
+  if (entrancePlaced != nullptr) {
+    type = entrancePlaced->GetType();
+  }
+
+  bool checkPoeCollectorAccess = (Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL)) && (entrancePlaced == nullptr || Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF) ||
+                                  type == EntranceType::SpecialInterior || type == EntranceType::Overworld || type == EntranceType::Spawn || type == EntranceType::WarpSong || type == EntranceType::OwlDrop);
+  bool checkOtherEntranceAccess = (Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL) || Settings::ShuffleOverworldSpawns) && (entrancePlaced == nullptr || Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF) ||
+                                  type == EntranceType::SpecialInterior || type == EntranceType::Overworld || type == EntranceType::Spawn || type == EntranceType::WarpSong || type == EntranceType::OwlDrop);
+
+  // Search the world to verify that all necessary conditions are still being held
+  // Conditions will be checked during the search and any that fail will be figured out
+  // afterwards
   Logic::LogicReset();
-  std::vector<ItemKey> itemsToPlace = FilterFromPool(ItemPool, [](const ItemKey i){ return ItemTable(i).IsAdvancement();});
-  for (ItemKey unplacedItem : itemsToPlace) {
-    ItemTable(unplacedItem).ApplyEffect();
-  }
-  GetAccessibleLocations(allLocations, SearchMode::AllLocationsReachable);
-  if (!allLocationsReachable) {
-    return false;
-  }
+  GetAccessibleLocations(allLocations, SearchMode::ValidateWorld, "", checkPoeCollectorAccess, checkOtherEntranceAccess);
 
   if (!Settings::DecoupleEntrances) {
     // Unless entrances are decoupled, we don't want the player to end up through certain entrances as the wrong age
@@ -328,12 +334,6 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
     }
   }
 
-  // Check certain conditions when certain types of ER are enabled
-  EntranceType type = EntranceType::None;
-  if (entrancePlaced != nullptr) {
-    type = entrancePlaced->GetType();
-  }
-
   if (Settings::ShuffleInteriorEntrances.IsNot(SHUFFLEINTERIORS_OFF) && Settings::GossipStoneHints.IsNot(HINTS_NO_HINTS) &&
   (entrancePlaced == nullptr || type == EntranceType::Interior || type == EntranceType::SpecialInterior)) {
     // When cows are shuffled, ensure both Impa's House entrances are in the same hint area because the cow is reachable from both sides
@@ -348,67 +348,45 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
     }
   }
 
-  if ((Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL) || Settings::ShuffleOverworldSpawns) && (entrancePlaced == nullptr || Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF) ||
-  type == EntranceType::SpecialInterior || type == EntranceType::Overworld || type == EntranceType::Spawn || type == EntranceType::WarpSong || type == EntranceType::OwlDrop)) {
-    // At least one valid starting region with all basic refills should be reachable without using any items at the beginning of the seed
-    Logic::LogicReset();
-    GetAccessibleLocations({});
-    if (!AreaTable(KOKIRI_FOREST)->HasAccess() && !AreaTable(KAKARIKO_VILLAGE)->HasAccess()) {
-      PlacementLog_Msg("Invalid starting area\n");
-      return false;
+  // If all locations aren't reachable, that means that one of the conditions failed when searching
+  if (!allLocationsReachable) {
+    if (checkOtherEntranceAccess) {
+      // At least one valid starting region with all basic refills should be reachable without using any items at the beginning of the seed
+      if (!AreaTable(KOKIRI_FOREST)->HasAccess() && !AreaTable(KAKARIKO_VILLAGE)->HasAccess()) {
+        PlacementLog_Msg("Invalid starting area\n");
+        return false;
+      }
+
+      // Check that a region where time passes is always reachable as both ages without having collected any items
+      // Logic::LogicReset();
+      // GetAccessibleLocations({}, SearchMode::BothAgesNoItems);
+      if (!Areas::HasTimePassAccess(AGE_CHILD) || !Areas::HasTimePassAccess(AGE_ADULT)) {
+        PlacementLog_Msg("Time passing is not guaranteed as both ages\n");
+        return false;
+      }
+
+      // The player should be able to get back to ToT after going through time, without having collected any items
+      // This is important to ensure that the player never loses access to the pedestal after going through time
+      if (Settings::ResolvedStartingAge == AGE_CHILD && !AreaTable(TEMPLE_OF_TIME)->Adult()) {
+        PlacementLog_Msg("Path to Temple of Time as adult is not guaranteed\n");
+        return false;
+      } else if (Settings::ResolvedStartingAge == AGE_ADULT && !AreaTable(TEMPLE_OF_TIME)->Child()) {
+        PlacementLog_Msg("Path to Temple of Time as child is not guaranteed\n");
+        return false;
+      }
     }
 
-    // Check that a region where time passes is always reachable as both ages without having collected any items
-    Logic::LogicReset();
-    GetAccessibleLocations({}, SearchMode::BothAgesNoItems);
-    if (!Areas::HasTimePassAccess(AGE_CHILD) || !Areas::HasTimePassAccess(AGE_ADULT)) {
-      PlacementLog_Msg("Time passing is not guaranteed as both ages\n");
-      return false;
+    // The Big Poe shop should always be accessible as adult without the need to use any bottles
+    // This is important to ensure that players can never lock their only bottles by filling them with Big Poes they can't sell
+    if (checkPoeCollectorAccess) {
+      if (!AreaTable(MARKET_GUARD_HOUSE)->Adult()) {
+        PlacementLog_Msg("Big Poe Shop access is not guarenteed as adult\n");
+        return false;
+      }
     }
-
-    // Check that the region is still accessible with the opposite starting time of day
-    // This is to ensure that time passing does not lock out access to all areas that can pass time
-    u8 startTime = Settings::StartingTime.Value<u8>();
-    if (startTime == STARTINGTIME_DAY) {
-      Settings::StartingTime.SetSelectedIndex(STARTINGTIME_NIGHT);
-    } else {
-      Settings::StartingTime.SetSelectedIndex(STARTINGTIME_DAY);
-    }
-
-    // Run the search again
-    Logic::LogicReset();
-    GetAccessibleLocations({}, SearchMode::BothAgesNoItems);
-    if (!Areas::HasTimePassAccess(AGE_CHILD) || !Areas::HasTimePassAccess(AGE_ADULT)) {
-      PlacementLog_Msg("Time passing is not guaranteed as both ages\n");
-      return false;
-    }
-
-    // Set the Starting Time setting back to what it originally was
-    Settings::StartingTime.SetSelectedIndex(startTime);
-
-    // The player should be able to get back to ToT after going through time, without having collected any items
-    // This is important to ensure that the player never loses access to the pedestal after going through time
-    if (Settings::ResolvedStartingAge == AGE_CHILD && !AreaTable(TEMPLE_OF_TIME)->Adult()) {
-      PlacementLog_Msg("Path to Temple of Time as adult is not guaranteed\n");
-      return false;
-    } else if (Settings::ResolvedStartingAge == AGE_ADULT && !AreaTable(TEMPLE_OF_TIME)->Child()) {
-      PlacementLog_Msg("Path to Temple of Time as child is not guaranteed\n");
-      return false;
-    }
+    PlacementLog_Msg("All Locations NOT REACHABLE\n");
+    return false;
   }
-
-  // The Big Poe shop should always be accessible as adult without the need to use any bottles
-  // This is important to ensure that players can never lock their only bottles by filling them with Big Poes they can't sell
-  if ((Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL)) && (entrancePlaced == nullptr || Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF) ||
-  type == EntranceType::SpecialInterior || type == EntranceType::Overworld || type == EntranceType::Spawn || type == EntranceType::WarpSong || type == EntranceType::OwlDrop)) {
-    Logic::LogicReset();
-    GetAccessibleLocations({}, SearchMode::PoeCollectorAccess);
-    if (!AreaTable(MARKET_GUARD_HOUSE)->Adult()) {
-      PlacementLog_Msg("Big Poe Shop access is not guarenteed as adult\n");
-      return false;
-    }
-  }
-
   return true;
 }
 
@@ -446,8 +424,6 @@ static bool PlaceOneWayPriorityEntrance(std::string priorityName, std::list<Area
   }
   Shuffle(availPool);
 
-  auto m = "availPool size: " + std::to_string(availPool.size());
-  CitraPrint(m);
   for (Entrance* entrance : availPool) {
     if (entrance->GetReplacement() != nullptr) {
       continue;
@@ -594,7 +570,7 @@ static void ShuffleEntrancePool(std::vector<Entrance*>& entrancePool, std::vecto
   }
 
   if (retryCount <= 0) {
-    PlacementLog_Msg("Entrance placement attempt count exceeded. Restarting randomization completely");
+    PlacementLog_Msg("Entrance placement attempt count exceeded. Restarting randomization completely\n");
     entranceShuffleFailure = true;
   }
 }

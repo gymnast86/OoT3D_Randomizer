@@ -12,11 +12,14 @@ enum class SearchMode {
     GeneratePlaythrough,
     CheckBeatable,
     AllLocationsReachable,
-    BothAgesNoItems,
+    ValidateWorld,
+    TimePassAccess,
+    TempleOfTimeAccess,
+    ValidStartingRegion,
     PoeCollectorAccess,
 };
 
 void VanillaFill();
 int Fill();
 
-std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& allowedLocations, SearchMode mode = SearchMode::ReachabilitySearch, std::string ignore = "");
+std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& allowedLocations, SearchMode mode = SearchMode::ReachabilitySearch, std::string ignore = "", bool checkPoeCollectorAccess = false, bool checkOtherEntranceAccess = false);
