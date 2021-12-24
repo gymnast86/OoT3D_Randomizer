@@ -175,12 +175,12 @@ std::vector<LocationKey> GetAllEmptyLocations() {
   return FilterFromPool(allLocations, [](const LocationKey loc){ return Location(loc)->GetPlacedItemKey() == NONE;});
 }
 
-//This function will return a vector of ItemLocations that are accessible with
-//where items have been placed so far within the world. The allowedLocations argument
-//specifies the pool of locations that we're trying to search for an accessible location in
+// This function will return a vector of ItemLocations that are accessible with
+// where items have been placed so far within the world. The allowedLocations argument
+// specifies the pool of locations that we're trying to search for an accessible location in
 std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& allowedLocations, SearchMode mode /* = SearchMode::ReachabilitySearch*/, std::string ignore /*= ""*/, bool checkPoeCollectorAccess /*= false*/, bool checkOtherEntranceAccess /*= false*/) {
   std::vector<LocationKey> accessibleLocations;
-  //Reset all access to begin a new search
+  // Reset all access to begin a new search
   if (mode < SearchMode::ValidateWorld) {
     ApplyStartingInventory();
   }
@@ -235,6 +235,10 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
         updatedEvents = true;
       }
 
+      // If we're checking for TimePass access do that for each area as it's being updated.
+      // TimePass Access is satisfied when every AgeTime can reach an area with TimePass
+      // without the aid of TimePass. During this mode, TimePass won't update ToD access
+      // in any area.
       if (mode == SearchMode::TimePassAccess) {
         if (area->timePass) {
           if (area->childDay) {
@@ -251,6 +255,7 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
           }
         }
         // Condition for validating that all startring AgeTimes have timepass access
+        // Once satisifed, change the mode to begin checking for Temple of Time Access
         if ((timePassChildDay && timePassChildNight && timePassAdultDay && timePassAdultNight) || !checkOtherEntranceAccess) {
           mode = SearchMode::TempleOfTimeAccess;
         }
@@ -272,12 +277,12 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
           areaPool.push_back(exit.GetAreaKey());
         }
 
-        //add shuffled entrances to the entrance playthrough
+        // Add shuffled entrances to the entrance playthrough
         if (mode == SearchMode::GeneratePlaythrough && exit.IsShuffled() && !exit.IsAddedToPool() && !noRandomEntrances) {
           entranceSphere.push_back(&exit);
           exit.AddToPool();
-          //don't list a coupled entrance from both directions
-          if (exit.GetReplacement()->GetReverse() != nullptr /*&& not decoupled_entrances*/) {
+          // Don't list a coupled entrance from both directions
+          if (exit.GetReplacement()->GetReverse() != nullptr && !DecoupleEntrances) {
             exit.GetReplacement()->GetReverse()->AddToPool();
           }
         }
@@ -862,6 +867,52 @@ static void RandomizeLinksPocket() {
  }
 }
 
+static void RandomizeShops() {
+  NonShopItems = {};
+  if (Shopsanity.Is(SHOPSANITY_OFF)) {
+    PlaceVanillaShopItems(); //Place vanilla shop items in vanilla location
+  } else {
+    int total_replaced = 0;
+    if (Shopsanity.IsNot(SHOPSANITY_ZERO)) { //Shopsanity 1-4, random
+      //Initialize NonShopItems
+      ItemAndPrice init;
+      init.Name = Text{"No Item", "Sin objeto", "Pas d'objet"};
+      init.Price = -1;
+      init.Repurchaseable = false;
+      NonShopItems.assign(32, init);
+      //Indices from OoTR. So shopsanity one will overwrite 7, three will overwrite 7, 5, 8, etc.
+      const std::array<int, 4> indices = {7, 5, 8, 6};
+      //Overwrite appropriate number of shop items
+      for (size_t i = 0; i < ShopLocationLists.size(); i++) {
+        int num_to_replace = GetShopsanityReplaceAmount(); //1-4 shop items will be overwritten, depending on settings
+        total_replaced += num_to_replace;
+        for (int j = 0; j < num_to_replace; j++) {
+          int itemindex = indices[j];
+          int shopsanityPrice = GetRandomShopPrice();
+          NonShopItems[TransformShopIndex(i*8+itemindex-1)].Price = shopsanityPrice; //Set price to be retrieved by the patch and textboxes
+          Location(ShopLocationLists[i][itemindex - 1])->SetShopsanityPrice(shopsanityPrice);
+        }
+      }
+    }
+    //Get all locations and items that don't have a shopsanity price attached
+    std::vector<LocationKey> shopLocations = {};
+    //Get as many vanilla shop items as the total number of shop items minus the number of replaced items
+    //So shopsanity 0 will get all 64 vanilla items, shopsanity 4 will get 32, etc.
+    std::vector<ItemKey> shopItems = GetMinVanillaShopItems(total_replaced);
+
+    for (size_t i = 0; i < ShopLocationLists.size(); i++) {
+      for (size_t j = 0; j < ShopLocationLists[i].size(); j++) {
+        LocationKey loc = ShopLocationLists[i][j];
+        if (!(Location(loc)->HasShopsanityPrice())) {
+          shopLocations.push_back(loc);
+        }
+      }
+    }
+    //Place the shop items which will still be at shop locations
+    AssumedFill(shopItems, shopLocations);
+  }
+}
+
 void VanillaFill() {
   //Perform minimum needed initialization
   AreaTable_Init();
@@ -893,16 +944,16 @@ int Fill() {
     playthroughLocations.clear();
     playthroughEntrances.clear();
     wothLocations.clear();
-    AreaTable_Init(); //Reset the world graph to intialize the proper locations
-    ItemReset(); //Reset shops incase of shopsanity random
+    AreaTable_Init(); // Reset the world graph to intialize the proper locations
+    ItemReset(); // Reset shops incase of shopsanity random
     GenerateLocationPool();
     GenerateItemPool();
     GenerateStartingInventory();
     RemoveStartingItemsFromPool();
     FillExcludedLocations();
 
-    //Temporarily add shop items to the ItemPool so that entrance randomization
-    //can validate the world using deku/hylian shields
+    // Temporarily add shop items to the ItemPool so that entrance randomization
+    // can validate the world using deku/hylian shields
     AddElementsToPool(ItemPool, GetMinVanillaShopItems(32)); //assume worst case shopsanity 4
     if (ShuffleEntrances) {
       printf("\x1b[7;10HShuffling Entrances...");
@@ -912,56 +963,14 @@ int Fill() {
       }
       printf("\x1b[7;32HDone");
     }
-    //erase temporary shop items
+    // Erase temporary shop items
     FilterAndEraseFromPool(ItemPool, [](const ItemKey item){return ItemTable(item).GetItemType() == ITEMTYPE_SHOP;});
 
     showItemProgress = true;
-    //Place shop items first, since a buy shield is needed to place a dungeon reward on Gohma due to access
-    NonShopItems = {};
-    if (Shopsanity.Is(SHOPSANITY_OFF)) {
-      PlaceVanillaShopItems(); //Place vanilla shop items in vanilla location
-    } else {
-      int total_replaced = 0;
-      if (Shopsanity.IsNot(SHOPSANITY_ZERO)) { //Shopsanity 1-4, random
-        //Initialize NonShopItems
-        ItemAndPrice init;
-        init.Name = Text{"No Item", "Sin objeto", "Pas d'objet"};
-        init.Price = -1;
-        init.Repurchaseable = false;
-        NonShopItems.assign(32, init);
-        //Indices from OoTR. So shopsanity one will overwrite 7, three will overwrite 7, 5, 8, etc.
-        const std::array<int, 4> indices = {7, 5, 8, 6};
-        //Overwrite appropriate number of shop items
-        for (size_t i = 0; i < ShopLocationLists.size(); i++) {
-          int num_to_replace = GetShopsanityReplaceAmount(); //1-4 shop items will be overwritten, depending on settings
-          total_replaced += num_to_replace;
-          for (int j = 0; j < num_to_replace; j++) {
-            int itemindex = indices[j];
-            int shopsanityPrice = GetRandomShopPrice();
-            NonShopItems[TransformShopIndex(i*8+itemindex-1)].Price = shopsanityPrice; //Set price to be retrieved by the patch and textboxes
-            Location(ShopLocationLists[i][itemindex - 1])->SetShopsanityPrice(shopsanityPrice);
-          }
-        }
-      }
-      //Get all locations and items that don't have a shopsanity price attached
-      std::vector<LocationKey> shopLocations = {};
-      //Get as many vanilla shop items as the total number of shop items minus the number of replaced items
-      //So shopsanity 0 will get all 64 vanilla items, shopsanity 4 will get 32, etc.
-      std::vector<ItemKey> shopItems = GetMinVanillaShopItems(total_replaced);
+    // Place shop items first, since only shop shields give logical shield access
+    RandomizeShops();
 
-      for (size_t i = 0; i < ShopLocationLists.size(); i++) {
-        for (size_t j = 0; j < ShopLocationLists[i].size(); j++) {
-          LocationKey loc = ShopLocationLists[i][j];
-          if (!(Location(loc)->HasShopsanityPrice())) {
-            shopLocations.push_back(loc);
-          }
-        }
-      }
-      //Place the shop items which will still be at shop locations
-      AssumedFill(shopItems, shopLocations);
-    }
-
-    //Place dungeon rewards
+    //Place dungeon rewards at the end of dungeons if necessary
     RandomizeDungeonRewards();
 
     //Place dungeon items restricted to their Own Dungeon
@@ -992,11 +1001,12 @@ int Fill() {
 
     //Then place Link's Pocket Item if it has to be an advancement item
     RandomizeLinksPocket();
+
     //Then place the rest of the advancement items
     std::vector<ItemKey> remainingAdvancementItems = FilterAndEraseFromPool(ItemPool, [](const ItemKey i) { return ItemTable(i).IsAdvancement();});
     AssumedFill(remainingAdvancementItems, allLocations, true);
 
-    //Fast fill for the rest of the pool
+    //Fast fill for the rest of the pool since the remaining items won't affect logic
     std::vector<ItemKey> remainingPool = FilterAndEraseFromPool(ItemPool, [](const ItemKey i) {return true;});
     FastFill(remainingPool, GetAllEmptyLocations(), false);
     GeneratePlaythrough();
