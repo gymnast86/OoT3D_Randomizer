@@ -142,7 +142,7 @@ std::vector<LocationKey> GetAllEmptyLocations() {
 //This function will return a vector of ItemLocations that are accessible with
 //where items have been placed so far within the world. The allowedLocations argument
 //specifies the pool of locations that we're trying to search for an accessible location in
-std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& allowedLocations, SearchMode mode /* = SearchMode::ReachabilitySearch*/, std::string ignore /*= ""*/) {
+std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& allowedLocations, SearchMode mode /* = SearchMode::ReachabilitySearch*/, std::string ignore /*= ""*/, const std::vector<LocationKey>& preCollectLocations /*= {}*/) {
   std::vector<LocationKey> accessibleLocations;
   //Reset all access to begin a new search
   if (mode != SearchMode::BothAgesNoItems) {
@@ -150,6 +150,13 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
   }
   Areas::AccessReset();
   LocationReset();
+
+  // Collect items before searching to better optimize some types of searches
+  for (LocationKey loc : preCollectLocations) {
+    Location(loc)->ApplyPlacedItemEffect();
+    Location(loc)->AddToPool();
+  }
+
   if (mode >= SearchMode::BothAgesNoItems) {
     if (Settings::HasNightStart) {
       AreaTable(ROOT)->childNight = true;
@@ -244,22 +251,22 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
                 //If we want to ignore tokens, only add if not a token
                 if (ignore == "Tokens" && type != ITEMTYPE_TOKEN) {
                   newItemLocations.push_back(location);
-                } 
+                }
                 //If we want to ignore bombchus, only add if bombchu is not in the name
                 else if (ignore == "Bombchus" && itemName.find("Bombchu") == std::string::npos) {
                   newItemLocations.push_back(location);
                 }
-                //We want to ignore a specific Buy item name 
+                //We want to ignore a specific Buy item name
                 else if (ignore != "Tokens" && ignore != "Bombchus") {
                   if ((type == ITEMTYPE_SHOP && ignore != GetShopItemBaseName(itemName)) || type != ITEMTYPE_SHOP) {
                     newItemLocations.push_back(location);
                   }
                 }
-              } 
+              }
               //If it doesn't, we can just add the location
               else {
                 newItemLocations.push_back(location); //Add item to cache to be considered in logic next iteration
-              }    
+              }
             }
           }
 
@@ -372,9 +379,11 @@ static void GeneratePlaythrough() {
 //Remove unnecessary items from playthrough by removing their location, and checking if game is still beatable
 //To reduce searches, some preprocessing is done in playthrough generation to avoid adding obviously unnecessary items
 static void PareDownPlaythrough() {
+
   std::vector<LocationKey> toAddBackItem;
-  //Start at sphere before Ganon's and count down
+  //Don't try the last sphere since it only has the Triforce
   for (int i = playthroughLocations.size() - 2; i >= 0; i--) {
+
     //Check each item location in sphere
     std::vector<int> erasableIndices;
     std::vector<LocationKey> sphere = playthroughLocations.at(i);
@@ -384,7 +393,7 @@ static void PareDownPlaythrough() {
       Location(loc)->SetPlacedItem(NONE); //Write in empty item
       playthroughBeatable = false;
       LogicReset();
-      
+
       std::string ignore = "";
       if (ItemTable(copy).GetItemType() == ITEMTYPE_TOKEN) {
         ignore = "Tokens";
@@ -396,7 +405,20 @@ static void PareDownPlaythrough() {
         ignore = GetShopItemBaseName(ItemTable(copy).GetName().GetEnglish());
       }
 
-      GetAccessibleLocations(allLocations, SearchMode::CheckBeatable, ignore); //Check if game is still beatable
+      // Collect all items in equal or lower spheres before searching.
+      // This helps speed up the game beatability check
+      std::vector<LocationKey> preCollectLocations = {};
+      for (int k = 0; k < i; k++) {
+        AddElementsToPool(preCollectLocations, playthroughLocations.at(k));
+      }
+      for (int v = sphere.size() - 1; v >= 0; v--) {
+        // If the item is not equal to the item we just took out
+        if (v != j) {
+          preCollectLocations.push_back(sphere.at(v));
+        }
+      }
+
+      GetAccessibleLocations({}, SearchMode::CheckBeatable, ignore, preCollectLocations); //Check if game is still beatable
 
       //Playthrough is still beatable without this item, therefore it can be removed from playthrough section.
       if (playthroughBeatable) {
@@ -442,26 +464,30 @@ static void CalculateWotH() {
       }
     }
   }
-
+  std::vector<LocationKey> preCollectLocations = {};
   //Now go through and check each location, seeing if it is strictly necessary for game completion
-  for (int i = wothLocations.size() - 1; i >= 0; i--) {
+  for (int i = 0; i < (int)wothLocations.size(); i++) {
     LocationKey loc = wothLocations[i];
     ItemKey copy = Location(loc)->GetPlacedItemKey(); //Copy out item
     Location(loc)->SetPlacedItem(NONE); //Write in empty item
     playthroughBeatable = false;
     LogicReset();
-    GetAccessibleLocations(allLocations, SearchMode::CheckBeatable); //Check if game is still beatable
+    GetAccessibleLocations({}, SearchMode::CheckBeatable, "", preCollectLocations); //Check if game is still beatable
     Location(loc)->SetPlacedItem(copy); //Immediately put item back
     //If removing this item and no other item caused the game to become unbeatable, then it is strictly necessary, so keep it
     //Else, delete from wothLocations
     if (playthroughBeatable) {
       wothLocations.erase(wothLocations.begin() + i);
+    } else {
+      // Items in wothLocations are ordered from lowest -> highest sphere, so
+      // we can collect them after each successive calculation
+      preCollectLocations.push_back(wothLocations[i]);
     }
   }
 
   playthroughBeatable = true;
   LogicReset();
-  GetAccessibleLocations(allLocations);
+  GetAccessibleLocations({});
 }
 
 //Will place things completely randomly, no logic checks are performed
@@ -471,7 +497,6 @@ static void FastFill(std::vector<ItemKey> items, std::vector<LocationKey> locati
     LocationKey loc = RandomElement(locations, true);
     Location(loc)->SetAsHintable();
     PlaceItemInLocation(loc, RandomElement(items, true));
-
     if (items.empty() && !endOnItemsEmpty) {
       items.push_back(GetJunkItem());
     }

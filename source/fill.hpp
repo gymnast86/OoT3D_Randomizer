@@ -19,4 +19,4 @@ enum class SearchMode {
 void VanillaFill();
 int Fill();
 
-std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& allowedLocations, SearchMode mode = SearchMode::ReachabilitySearch, std::string ignore = "");
+std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& allowedLocations, SearchMode mode = SearchMode::ReachabilitySearch, std::string ignore = "", const std::vector<LocationKey>& preCollectLocations = {});
