@@ -956,7 +956,7 @@ int Fill() {
     // can validate the world using deku/hylian shields
     AddElementsToPool(ItemPool, GetMinVanillaShopItems(32)); //assume worst case shopsanity 4
     if (ShuffleEntrances) {
-      printf("\x1b[7;10HShuffling Entrances...");
+      printf("\x1b[7;10HShuffling Entrances");
       if (ShuffleAllEntrances() == ENTRANCE_SHUFFLE_FAILURE) {
         retries++;
         continue;

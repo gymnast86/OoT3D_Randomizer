@@ -19,6 +19,8 @@
 std::list<EntranceOverride> entranceOverrides = {};
 bool noRandomEntrances = false;
 static bool entranceShuffleFailure = false;
+static int totalRandomizableEntrances = 0;
+static int curNumRandomizedEntrances = 0;
 
 typedef struct {
     EntranceType type;
@@ -45,6 +47,23 @@ using EntrancePools = std::map<EntranceType, std::vector<Entrance*>>;
 // base randomizer's code instead:
 // https://github.com/TestRunnerSRL/OoT-Randomizer/blob/Dev/EntranceShuffle.py
 
+// Updates the user on how many entrances are currently shuffled
+static void DisplayEntranceProgress() {
+  std::string dots = ".";
+  float progress = (float)curNumRandomizedEntrances / (float)totalRandomizableEntrances;
+  if (progress > 0.33) {
+    dots += ".";
+  } else {
+    dots += " ";
+  }
+  if (progress > 0.66) {
+    dots += ".";
+  } else {
+    dots += " ";
+  }
+  printf("\x1b[7;29H%s", dots.c_str());
+}
+
 void SetAllEntrancesData(std::vector<EntranceInfoPair>& entranceShuffleTable) {
   for (auto& entrancePair: entranceShuffleTable) {
 
@@ -70,6 +89,7 @@ void SetAllEntrancesData(std::vector<EntranceInfoPair>& entranceShuffleTable) {
 static std::vector<Entrance*> AssumeEntrancePool(std::vector<Entrance*>& entrancePool) {
   std::vector<Entrance*> assumedPool = {};
   for (Entrance* entrance : entrancePool) {
+    totalRandomizableEntrances++;
     Entrance* assumedForward = entrance->AssumeReachable();
     if (entrance->GetReverse() != nullptr && !Settings::DecoupleEntrances) {
       Entrance* assumedReturn = entrance->GetReverse()->AssumeReachable();
@@ -398,12 +418,15 @@ static bool ReplaceEntrance(Entrance* entrance, Entrance* target, std::vector<En
   ChangeConnections(entrance, target);
   if (ValidateWorld(entrance)) {
     rollbacks.push_back(EntrancePair{entrance, target});
+    curNumRandomizedEntrances++;
+    DisplayEntranceProgress();
     return true;
   } else {
     if (entrance->GetConnectedRegionKey() != NONE) {
       RestoreConnections(entrance, target);
     }
   }
+  DisplayEntranceProgress();
   return false;
 }
 
@@ -552,12 +575,14 @@ static void ShuffleEntrancePool(std::vector<Entrance*>& entrancePool, std::vecto
       if(!success) {
         for (auto& pair : rollbacks) {
           RestoreConnections(pair.first, pair.second);
+          curNumRandomizedEntrances--;
         }
         continue;
       }
     } else {
       for (auto& pair : rollbacks) {
         RestoreConnections(pair.first, pair.second);
+        curNumRandomizedEntrances--;
       }
       continue;
     }
@@ -588,6 +613,9 @@ static void SetShuffledEntrances(EntrancePools entrancePools) {
 
 // Process for setting up the shuffling of all entrances to be shuffled
 int ShuffleAllEntrances() {
+
+  totalRandomizableEntrances = 0;
+  curNumRandomizedEntrances = 0;
 
   std::vector<EntranceInfoPair> entranceShuffleTable = {
                                    //Parent Region                     Connected Region                       index   blue warp
