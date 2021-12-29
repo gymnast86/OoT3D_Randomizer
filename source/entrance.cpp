@@ -108,7 +108,7 @@ static std::array<std::vector<Entrance*>, 2> SplitEntrancesByRequirements(std::v
     ItemTable(unplacedItem).ApplyEffect();
   }
   // run a search to see what's accessible
-  GetAccessibleLocations(allLocations);
+  GetAccessibleLocations({});
 
   for (Entrance* entrance : entrancesToSplit) {
     // if an entrance is accessible at all times of day by both ages, it's a soft entrance with no restrictions

@@ -151,6 +151,15 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
   Areas::AccessReset();
   LocationReset();
 
+  size_t totalAllowedLocations = 0;
+  // Set all remaining locations as allowed
+  for (LocationKey loc : allowedLocations) {
+    if (Location(loc)->GetPlacedItemKey() == NONE) {
+      Location(loc)->SetAsAllowed();
+      totalAllowedLocations++;
+    }
+  }
+
   // Collect items before searching to better optimize some types of searches
   for (LocationKey loc : preCollectLocations) {
     Location(loc)->ApplyPlacedItemEffect();
@@ -239,8 +248,11 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
 
           location->AddToPool();
 
-          if (location->GetPlacedItemKey() == NONE) {
+          if (location->IsAllowed() && location->GetPlacedItemKey() == NONE) {
             accessibleLocations.push_back(loc); //Empty location, consider for placement
+            if (!allowedLocations.empty() && accessibleLocations.size() == totalAllowedLocations && mode == SearchMode::ReachabilitySearch) {
+              return accessibleLocations; // If we've found all allowed locations, we don't need to search anymore
+            }
           } else {
             if (mode < SearchMode::BothAgesNoItems) {
               //If ignore has a value, we want to check if the item location should be considered or not
@@ -359,14 +371,14 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
     return {};
   }
 
-  erase_if(accessibleLocations, [&allowedLocations](LocationKey loc){
-    for (LocationKey allowedLocation : allowedLocations) {
-      if (loc == allowedLocation || Location(loc)->GetPlacedItemKey() != NONE) {
-        return false;
-      }
-    }
-    return true;
-  });
+  // erase_if(accessibleLocations, [&allowedLocations](LocationKey loc){
+  //   for (LocationKey allowedLocation : allowedLocations) {
+  //     if (loc == allowedLocation || Location(loc)->GetPlacedItemKey() != NONE) {
+  //       return false;
+  //     }
+  //   }
+  //   return true;
+  // });
   return accessibleLocations;
 }
 
@@ -882,6 +894,8 @@ int Fill() {
     //erase temporary shop items
     FilterAndEraseFromPool(ItemPool, [](const ItemKey item){return ItemTable(item).GetItemType() == ITEMTYPE_SHOP;});
 
+    StartTiming();
+
     showItemProgress = true;
     //Place shop items first, since a buy shield is needed to place a dungeon reward on Gohma due to access
     NonShopItems = {};
@@ -967,6 +981,8 @@ int Fill() {
     std::vector<ItemKey> remainingPool = FilterAndEraseFromPool(ItemPool, [](const ItemKey i) {return true;});
     FastFill(remainingPool, GetAllEmptyLocations(), false);
     GeneratePlaythrough();
+    EndTiming();
+    PrintTiming("Fill Algorithm");
     //Successful placement, produced beatable result
     if(playthroughBeatable && !placementFailure) {
       printf("Done");
