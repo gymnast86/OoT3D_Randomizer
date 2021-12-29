@@ -8,6 +8,7 @@
 #include "debug.hpp"
 #include "spoiler_log.hpp"
 #include "hints.hpp"
+#include "location_access.hpp"
 
 #include <unistd.h>
 
@@ -62,6 +63,11 @@ static void DisplayEntranceProgress() {
     dots += " ";
   }
   printf("\x1b[7;29H%s", dots.c_str());
+  #ifdef ENABLE_DEBUG
+    if (curNumRandomizedEntrances == totalRandomizableEntrances) {
+      Areas::DumpWorldGraph("Finish Validation");
+    }
+  #endif
 }
 
 void SetAllEntrancesData(std::vector<EntranceInfoPair>& entranceShuffleTable) {
@@ -297,10 +303,14 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
     type = entrancePlaced->GetType();
   }
 
-  bool checkPoeCollectorAccess = (Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL)) && (entrancePlaced == nullptr || Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF) ||
-                                  type == EntranceType::SpecialInterior || type == EntranceType::Overworld || type == EntranceType::Spawn || type == EntranceType::WarpSong || type == EntranceType::OwlDrop);
-  bool checkOtherEntranceAccess = (Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL) || Settings::ShuffleOverworldSpawns) && (entrancePlaced == nullptr || Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF) ||
-                                  type == EntranceType::SpecialInterior || type == EntranceType::Overworld || type == EntranceType::Spawn || type == EntranceType::WarpSong || type == EntranceType::OwlDrop);
+  bool checkPoeCollectorAccess  = (Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL)) && (entrancePlaced == nullptr /*|| Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF)*/ ||
+                                 type == EntranceType::Interior || type == EntranceType::SpecialInterior || type == EntranceType::Overworld || type == EntranceType::Spawn || type == EntranceType::WarpSong || type == EntranceType::OwlDrop);
+  bool checkOtherEntranceAccess = (Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL) /*|| Settings::ShuffleOverworldSpawns*/) && (entrancePlaced == nullptr /*|| Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF)*/ ||
+                                 type == EntranceType::SpecialInterior || type == EntranceType::Overworld || type == EntranceType::Spawn || type == EntranceType::WarpSong || type == EntranceType::OwlDrop);
+
+  // Check to make sure all locations are still reachable
+  Logic::LogicReset();
+  GetAccessibleLocations({}, SearchMode::ValidateWorld, "", {}, checkPoeCollectorAccess, checkOtherEntranceAccess);
 
   // Search the world to verify that all necessary conditions are still being held
   // Conditions will be checked during the search and any that fail will be figured out
@@ -378,8 +388,6 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
       }
 
       // Check that a region where time passes is always reachable as both ages without having collected any items
-      // Logic::LogicReset();
-      // GetAccessibleLocations({}, SearchMode::BothAgesNoItems);
       if (!Areas::HasTimePassAccess(AGE_CHILD) || !Areas::HasTimePassAccess(AGE_ADULT)) {
         PlacementLog_Msg("Time passing is not guaranteed as both ages\n");
         return false;
@@ -417,11 +425,23 @@ static bool ReplaceEntrance(Entrance* entrance, Entrance* target, std::vector<En
   }
   ChangeConnections(entrance, target);
   if (ValidateWorld(entrance)) {
+    #ifdef ENABLE_DEBUG
+      std::string ticks = std::to_string(svcGetSystemTick());
+      auto message = "Dumping World Graph at " + ticks + "\n";
+      //PlacementLog_Msg(message);
+      //Areas::DumpWorldGraph(ticks);
+    #endif
     rollbacks.push_back(EntrancePair{entrance, target});
     curNumRandomizedEntrances++;
     DisplayEntranceProgress();
     return true;
   } else {
+    #ifdef ENABLE_DEBUG
+      std::string ticks = std::to_string(svcGetSystemTick());
+      auto message = "Dumping World Graph at " + ticks + "\n";
+      //PlacementLog_Msg(message);
+      //Areas::DumpWorldGraph(ticks);
+    #endif
     if (entrance->GetConnectedRegionKey() != NONE) {
       RestoreConnections(entrance, target);
     }
@@ -557,11 +577,15 @@ static void ShuffleEntrancePool(std::vector<Entrance*>& entrancePool, std::vecto
   auto& restrictiveEntrances = splitEntrances[0];
   auto& softEntrances = splitEntrances[1];
 
-  int initialTry = retryCount;
-  while (retryCount > 0) {
-    if (retryCount != initialTry) {
-      auto message = "Failed to connect entrances. Retrying " + std::to_string(retryCount) + " more times.\n";
-      PlacementLog_Msg(message);
+  int retries = 20;
+  while (retries > 0) {
+    if (retries != 20) {
+      #ifdef ENABLE_DEBUG
+        std::string ticks = std::to_string(svcGetSystemTick());
+        auto message = "Failed to connect entrances. Retrying " + std::to_string(retries) + " more times.\nDumping World Graph at " + ticks + "\n";
+        PlacementLog_Msg(message);
+        Areas::DumpWorldGraph(ticks);
+      #endif
     }
     retryCount--;
 

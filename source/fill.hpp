@@ -19,6 +19,7 @@ enum class SearchMode {
     PoeCollectorAccess,
 };
 
+void ClearProgress();
 void VanillaFill();
 int Fill();
 

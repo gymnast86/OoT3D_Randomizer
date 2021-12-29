@@ -109,8 +109,9 @@ static void ValidateWorldChecks(SearchMode& mode, bool checkPoeCollectorAccess, 
   }
   // Condition for validating Poe Collector Access
   if (mode == SearchMode::PoeCollectorAccess && (AreaTable(MARKET_GUARD_HOUSE)->Adult() || !checkPoeCollectorAccess)) {
-    // Re-apply starting inventory incase it had a bottle
-    ApplyStartingInventory();
+    if (StartingInventoryHasBottle()) {
+      Logic::HasBottle = true;
+    }
     // Apply all items that are necessary for checking all location access
     std::vector<ItemKey> itemsToPlace = FilterFromPool(ItemPool, [](const ItemKey i){ return ItemTable(i).IsAdvancement();});
     for (ItemKey unplacedItem : itemsToPlace) {
@@ -188,7 +189,6 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
   LocationReset();
 
   size_t totalAllowedLocations = 0;
-  // Set all remaining locations as allowed
   for (LocationKey loc : allowedLocations) {
     if (Location(loc)->GetPlacedItemKey() == NONE) {
       Location(loc)->SetAsAllowed();
@@ -210,6 +210,7 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
     AreaTable(ROOT)->adultNight = true;
     AreaTable(ROOT)->childDay = true;
     AreaTable(ROOT)->adultDay = true;
+    allLocationsReachable = false;
   }
 
   //Variables for playthrough
@@ -654,6 +655,7 @@ static void AssumedFill(const std::vector<ItemKey>& items, const std::vector<Loc
         PlacementLog_Msg(". TRYING AGAIN...\n");
 
         #ifdef ENABLE_DEBUG
+          Areas::DumpWorldGraph(ItemTable(item).GetName().GetEnglish());
           PlacementLog_Write();
         #endif
 
@@ -973,7 +975,16 @@ void VanillaFill() {
   CreateAlwaysIncludedMessages();
 }
 
+void ClearProgress() {
+  printf("\x1b[7;32H    "); // Done
+  printf("\x1b[8;10H                    "); // Placing Items...Done
+  printf("\x1b[9;10H                              "); // Calculating Playthrough...Done
+  printf("\x1b[10;10H                     "); // Creating Hints...Done
+  printf("\x1b[11;10H                                  "); // Writing Spoiler Log...Done
+}
+
 int Fill() {
+
   int retries = 0;
   while(retries < 5) {
     placementFailure = false;
@@ -996,6 +1007,7 @@ int Fill() {
       printf("\x1b[7;10HShuffling Entrances");
       if (ShuffleAllEntrances() == ENTRANCE_SHUFFLE_FAILURE) {
         retries++;
+        ClearProgress();
         continue;
       }
       printf("\x1b[7;32HDone");
@@ -1074,9 +1086,10 @@ int Fill() {
     //Unsuccessful placement
     if(retries < 4) {
       GetAccessibleLocations(allLocations, SearchMode::AllLocationsReachable);
-      printf("\x1b[9;10HFailed. Retrying... %d", retries+2);
+      PlacementLog_Msg("\nGOT STUCK. RETRYING...\n");
       Areas::ResetAllLocations();
       LogicReset();
+      ClearProgress();
     }
     retries++;
   }

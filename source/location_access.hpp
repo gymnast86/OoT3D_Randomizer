@@ -223,6 +223,7 @@ namespace Areas {
   extern void AccessReset();
   extern void ResetAllLocations();
   extern bool HasTimePassAccess(u8 age);
+  extern void DumpWorldGraph(std::string str);
 } //namespace Exits
 
 void  AreaTable_Init();

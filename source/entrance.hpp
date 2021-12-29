@@ -67,8 +67,13 @@ public:
         return AreaTable(parentRegion)->regionName + " -> " + AreaTable(connectedRegion)->regionName;
     }
 
-    void SetName() {
-        name = AreaTable(parentRegion)->regionName + " -> " + AreaTable(connectedRegion)->regionName;
+    void SetName(std::string name_ = "") {
+        if (name_ == "") {
+          name = AreaTable(parentRegion)->regionName + " -> " + AreaTable(connectedRegion)->regionName;
+        } else {
+          name = std::move(name_);
+        }
+
     }
 
     std::string GetName() const {
@@ -112,7 +117,7 @@ public:
     }
 
     //set the logic to be a specific age and time of day and see if the condition still holds
-    bool CheckConditionAtAgeTime(bool& age, bool& time) const {
+    bool CheckConditionAtAgeTime(bool& age, bool& time, bool passAnyway = false) const {
 
         Logic::IsChild = false;
         Logic::IsAdult = false;
@@ -123,7 +128,7 @@ public:
         age = true;
 
         Logic::UpdateHelpers();
-        return GetConditionsMet();
+        return GetConditionsMet() && (connectedRegion != NONE || passAnyway);
     }
 
     AreaKey GetConnectedRegionKey() const {
@@ -239,6 +244,7 @@ public:
         AreaTable(ROOT)->AddExit(ROOT, connectedRegion, []{return true;});
         Entrance* targetEntrance = AreaTable(ROOT)->GetExit(connectedRegion);
         targetEntrance->SetReplacement(this);
+        targetEntrance->SetName(GetParentRegion()->regionName + " -> " + GetConnectedRegion()->regionName);
         return targetEntrance;
     }
 
