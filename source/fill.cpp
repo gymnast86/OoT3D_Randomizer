@@ -175,10 +175,10 @@ std::vector<LocationKey> GetAllEmptyLocations() {
   return FilterFromPool(allLocations, [](const LocationKey loc){ return Location(loc)->GetPlacedItemKey() == NONE;});
 }
 
-// This function will return a vector of ItemLocations that are accessible with
-// where items have been placed so far within the world. The allowedLocations argument
-// specifies the pool of locations that we're trying to search for an accessible location in
-std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& allowedLocations, SearchMode mode /* = SearchMode::ReachabilitySearch*/, std::string ignore /*= ""*/, bool checkPoeCollectorAccess /*= false*/, bool checkOtherEntranceAccess /*= false*/) {
+//This function will return a vector of ItemLocations that are accessible with
+//where items have been placed so far within the world. The allowedLocations argument
+//specifies the pool of locations that we're trying to search for an accessible location in
+std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& allowedLocations, SearchMode mode /* = SearchMode::ReachabilitySearch*/, std::string ignore /*= ""*/, const std::vector<LocationKey>& preCollectLocations /*= {}*/, bool checkPoeCollectorAccess /*= false*/, bool checkOtherEntranceAccess /*= false*/) {
   std::vector<LocationKey> accessibleLocations;
   // Reset all access to begin a new search
   if (mode < SearchMode::ValidateWorld) {
@@ -186,6 +186,22 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
   }
   Areas::AccessReset();
   LocationReset();
+
+  size_t totalAllowedLocations = 0;
+  // Set all remaining locations as allowed
+  for (LocationKey loc : allowedLocations) {
+    if (Location(loc)->GetPlacedItemKey() == NONE) {
+      Location(loc)->SetAsAllowed();
+      totalAllowedLocations++;
+    }
+  }
+
+  // Collect items before searching to better optimize some types of searches
+  for (LocationKey loc : preCollectLocations) {
+    Location(loc)->ApplyPlacedItemEffect();
+    Location(loc)->AddToPool();
+  }
+
   std::vector<AreaKey> areaPool = {ROOT};
 
   if (mode == SearchMode::ValidateWorld) {
@@ -299,8 +315,11 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
 
             location->AddToPool();
 
-            if (location->GetPlacedItemKey() == NONE) {
+            if (location->IsAllowed() && location->GetPlacedItemKey() == NONE) {
               accessibleLocations.push_back(loc); //Empty location, consider for placement
+              if (!allowedLocations.empty() && accessibleLocations.size() == totalAllowedLocations && mode == SearchMode::ReachabilitySearch) {
+                return accessibleLocations; // If we've found all allowed locations, we don't need to search anymore
+              }
             } else {
               //If ignore has a value, we want to check if the item location should be considered or not
               //This is necessary due to the below preprocessing for playthrough generation
@@ -415,14 +434,14 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
     return {};
   }
 
-  erase_if(accessibleLocations, [&allowedLocations](LocationKey loc){
-    for (LocationKey allowedLocation : allowedLocations) {
-      if (loc == allowedLocation || Location(loc)->GetPlacedItemKey() != NONE) {
-        return false;
-      }
-    }
-    return true;
-  });
+  // erase_if(accessibleLocations, [&allowedLocations](LocationKey loc){
+  //   for (LocationKey allowedLocation : allowedLocations) {
+  //     if (loc == allowedLocation || Location(loc)->GetPlacedItemKey() != NONE) {
+  //       return false;
+  //     }
+  //   }
+  //   return true;
+  // });
   return accessibleLocations;
 }
 
@@ -435,9 +454,11 @@ static void GeneratePlaythrough() {
 //Remove unnecessary items from playthrough by removing their location, and checking if game is still beatable
 //To reduce searches, some preprocessing is done in playthrough generation to avoid adding obviously unnecessary items
 static void PareDownPlaythrough() {
+
   std::vector<LocationKey> toAddBackItem;
-  //Start at sphere before Ganon's and count down
+  //Don't try the last sphere since it only has the Triforce
   for (int i = playthroughLocations.size() - 2; i >= 0; i--) {
+
     //Check each item location in sphere
     std::vector<int> erasableIndices;
     std::vector<LocationKey> sphere = playthroughLocations.at(i);
@@ -459,7 +480,20 @@ static void PareDownPlaythrough() {
         ignore = GetShopItemBaseName(ItemTable(copy).GetName().GetEnglish());
       }
 
-      GetAccessibleLocations(allLocations, SearchMode::CheckBeatable, ignore); //Check if game is still beatable
+      // Collect all items in equal or lower spheres before searching.
+      // This helps speed up the game beatability check
+      std::vector<LocationKey> preCollectLocations = {};
+      for (int k = 0; k < i; k++) {
+        AddElementsToPool(preCollectLocations, playthroughLocations.at(k));
+      }
+      for (int v = sphere.size() - 1; v >= 0; v--) {
+        // If the item is not equal to the item we just took out
+        if (v != j) {
+          preCollectLocations.push_back(sphere.at(v));
+        }
+      }
+
+      GetAccessibleLocations({}, SearchMode::CheckBeatable, ignore, preCollectLocations); //Check if game is still beatable
 
       //Playthrough is still beatable without this item, therefore it can be removed from playthrough section.
       if (playthroughBeatable) {
@@ -505,26 +539,30 @@ static void CalculateWotH() {
       }
     }
   }
-
+  std::vector<LocationKey> preCollectLocations = {};
   //Now go through and check each location, seeing if it is strictly necessary for game completion
-  for (int i = wothLocations.size() - 1; i >= 0; i--) {
+  for (int i = 0; i < (int)wothLocations.size(); i++) {
     LocationKey loc = wothLocations[i];
     ItemKey copy = Location(loc)->GetPlacedItemKey(); //Copy out item
     Location(loc)->SetPlacedItem(NONE); //Write in empty item
     playthroughBeatable = false;
     LogicReset();
-    GetAccessibleLocations(allLocations, SearchMode::CheckBeatable); //Check if game is still beatable
+    GetAccessibleLocations({}, SearchMode::CheckBeatable, "", preCollectLocations); //Check if game is still beatable
     Location(loc)->SetPlacedItem(copy); //Immediately put item back
     //If removing this item and no other item caused the game to become unbeatable, then it is strictly necessary, so keep it
     //Else, delete from wothLocations
     if (playthroughBeatable) {
       wothLocations.erase(wothLocations.begin() + i);
+    } else {
+      // Items in wothLocations are ordered from lowest -> highest sphere, so
+      // we can collect them after each successive calculation
+      preCollectLocations.push_back(wothLocations[i]);
     }
   }
 
   playthroughBeatable = true;
   LogicReset();
-  GetAccessibleLocations(allLocations);
+  GetAccessibleLocations({});
 }
 
 //Will place things completely randomly, no logic checks are performed
@@ -534,7 +572,6 @@ static void FastFill(std::vector<ItemKey> items, std::vector<LocationKey> locati
     LocationKey loc = RandomElement(locations, true);
     Location(loc)->SetAsHintable();
     PlaceItemInLocation(loc, RandomElement(items, true));
-
     if (items.empty() && !endOnItemsEmpty) {
       items.push_back(GetJunkItem());
     }
@@ -966,6 +1003,8 @@ int Fill() {
     // Erase temporary shop items
     FilterAndEraseFromPool(ItemPool, [](const ItemKey item){return ItemTable(item).GetItemType() == ITEMTYPE_SHOP;});
 
+    StartTiming();
+
     showItemProgress = true;
     // Place shop items first, since only shop shields give logical shield access
     RandomizeShops();
@@ -1010,6 +1049,8 @@ int Fill() {
     std::vector<ItemKey> remainingPool = FilterAndEraseFromPool(ItemPool, [](const ItemKey i) {return true;});
     FastFill(remainingPool, GetAllEmptyLocations(), false);
     GeneratePlaythrough();
+    EndTiming();
+    PrintTiming("Fill Algorithm");
     //Successful placement, produced beatable result
     if(playthroughBeatable && !placementFailure) {
       printf("Done");
