@@ -188,6 +188,7 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
   Areas::AccessReset();
   LocationReset();
 
+  size_t totalFoundLocations = 0;
   size_t totalAllowedLocations = 0;
   for (LocationKey loc : allowedLocations) {
     if (Location(loc)->GetPlacedItemKey() == NONE) {
@@ -271,7 +272,7 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
             timePassAdultNight = true;
           }
         }
-        // Condition for validating that all startring AgeTimes have timepass access
+        // Condition for validating that all starting AgeTimes have timepass access
         // Once satisifed, change the mode to begin checking for Temple of Time Access
         if ((timePassChildDay && timePassChildNight && timePassAdultDay && timePassAdultNight) || !checkOtherEntranceAccess) {
           mode = SearchMode::TempleOfTimeAccess;
@@ -434,15 +435,6 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
     }
     return {};
   }
-
-  // erase_if(accessibleLocations, [&allowedLocations](LocationKey loc){
-  //   for (LocationKey allowedLocation : allowedLocations) {
-  //     if (loc == allowedLocation || Location(loc)->GetPlacedItemKey() != NONE) {
-  //       return false;
-  //     }
-  //   }
-  //   return true;
-  // });
   return accessibleLocations;
 }
 
@@ -1000,6 +992,8 @@ int Fill() {
     RemoveStartingItemsFromPool();
     FillExcludedLocations();
 
+    StartTiming();
+
     // Temporarily add shop items to the ItemPool so that entrance randomization
     // can validate the world using deku/hylian shields
     AddElementsToPool(ItemPool, GetMinVanillaShopItems(32)); //assume worst case shopsanity 4
@@ -1014,8 +1008,6 @@ int Fill() {
     }
     // Erase temporary shop items
     FilterAndEraseFromPool(ItemPool, [](const ItemKey item){return ItemTable(item).GetItemType() == ITEMTYPE_SHOP;});
-
-    StartTiming();
 
     showItemProgress = true;
     // Place shop items first, since only shop shields give logical shield access
@@ -1062,7 +1054,7 @@ int Fill() {
     FastFill(remainingPool, GetAllEmptyLocations(), false);
     GeneratePlaythrough();
     EndTiming();
-    PrintTiming("Fill Algorithm");
+    PrintTiming("Algorithm");
     //Successful placement, produced beatable result
     if(playthroughBeatable && !placementFailure) {
       printf("Done");

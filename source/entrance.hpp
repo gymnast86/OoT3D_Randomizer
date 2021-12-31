@@ -106,10 +106,10 @@ public:
             return false;
         }
 
-        return (parent->childDay   && CheckConditionAtAgeTime(Logic::IsChild, Logic::AtDay))   &&
-               (parent->childNight && CheckConditionAtAgeTime(Logic::IsChild, Logic::AtNight)) &&
-               (parent->adultDay   && CheckConditionAtAgeTime(Logic::IsAdult, Logic::AtDay))   &&
-               (parent->adultNight && CheckConditionAtAgeTime(Logic::IsAdult, Logic::AtNight));
+        return (parent->childDay   && CheckConditionAtAgeTime(Logic::IsChild, Logic::AtDay, allAgeTimes))   &&
+               (parent->childNight && CheckConditionAtAgeTime(Logic::IsChild, Logic::AtNight, allAgeTimes)) &&
+               (parent->adultDay   && CheckConditionAtAgeTime(Logic::IsAdult, Logic::AtDay, allAgeTimes))   &&
+               (parent->adultNight && CheckConditionAtAgeTime(Logic::IsAdult, Logic::AtNight, allAgeTimes));
     }
 
     AreaKey GetAreaKey() const {

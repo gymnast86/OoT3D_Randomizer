@@ -48,7 +48,7 @@ using EntrancePools = std::map<EntranceType, std::vector<Entrance*>>;
 // base randomizer's code instead:
 // https://github.com/TestRunnerSRL/OoT-Randomizer/blob/Dev/EntranceShuffle.py
 
-// Updates the user on how many entrances are currently shuffled
+// Updates the user on the entrance shuffle progress
 static void DisplayEntranceProgress() {
   std::string dots = ".";
   float progress = (float)curNumRandomizedEntrances / (float)totalRandomizableEntrances;
@@ -64,6 +64,8 @@ static void DisplayEntranceProgress() {
   }
   printf("\x1b[7;29H%s", dots.c_str());
   #ifdef ENABLE_DEBUG
+    auto m = std::to_string(curNumRandomizedEntrances) + " / " + std::to_string(totalRandomizableEntrances) + " placed. " + std::to_string(progress * 100) + "\%\n";
+    PlacementLog_Msg(m);
     if (curNumRandomizedEntrances == totalRandomizableEntrances) {
       Areas::DumpWorldGraph("Finish Validation");
     }
@@ -171,6 +173,10 @@ static std::array<std::vector<Entrance*>, 2> SplitEntrancesByRequirements(std::v
   // run a search to see what's accessible
   GetAccessibleLocations({});
 
+  // std::string ticks = std::to_string(svcGetSystemTick());
+  // auto message = "Dumping World Graph at " + ticks + "\n";
+  // PlacementLog_Msg(message);
+  // Areas::DumpWorldGraph(ticks);
   for (Entrance* entrance : entrancesToSplit) {
     // If an entrance is accessible at all times of day by both ages, it's a soft entrance with no restrictions
     if (entrance->ConditionsMet(true)) {
@@ -225,6 +231,8 @@ static void ChangeConnections(Entrance* entrance, Entrance* targetEntrance) {
   }
 }
 
+// In the event that we need to retry shuffling an entire group we can restore the
+// original connections to reset the entrance and target entrance.
 static void RestoreConnections(Entrance* entrance, Entrance* targetEntrance) {
   targetEntrance->Connect(entrance->Disconnect());
   entrance->SetReplacement(nullptr);
@@ -303,14 +311,10 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
     type = entrancePlaced->GetType();
   }
 
-  bool checkPoeCollectorAccess  = (Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL)) && (entrancePlaced == nullptr /*|| Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF)*/ ||
+  bool checkPoeCollectorAccess  = (Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL)) && (entrancePlaced == nullptr || Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF) ||
                                  type == EntranceType::Interior || type == EntranceType::SpecialInterior || type == EntranceType::Overworld || type == EntranceType::Spawn || type == EntranceType::WarpSong || type == EntranceType::OwlDrop);
-  bool checkOtherEntranceAccess = (Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL) /*|| Settings::ShuffleOverworldSpawns*/) && (entrancePlaced == nullptr /*|| Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF)*/ ||
+  bool checkOtherEntranceAccess = (Settings::ShuffleOverworldEntrances || Settings::ShuffleInteriorEntrances.Is(SHUFFLEINTERIORS_ALL) || Settings::ShuffleOverworldSpawns) && (entrancePlaced == nullptr || Settings::MixedEntrancePools.IsNot(MIXEDENTRANCES_OFF) ||
                                  type == EntranceType::SpecialInterior || type == EntranceType::Overworld || type == EntranceType::Spawn || type == EntranceType::WarpSong || type == EntranceType::OwlDrop);
-
-  // Check to make sure all locations are still reachable
-  Logic::LogicReset();
-  GetAccessibleLocations({}, SearchMode::ValidateWorld, "", {}, checkPoeCollectorAccess, checkOtherEntranceAccess);
 
   // Search the world to verify that all necessary conditions are still being held
   // Conditions will be checked during the search and any that fail will be figured out
@@ -412,6 +416,8 @@ static bool ValidateWorld(Entrance* entrancePlaced) {
         return false;
       }
     }
+
+    // If the above conditions were all met, then we simply weren't able to reach all locations
     PlacementLog_Msg("All Locations NOT REACHABLE\n");
     return false;
   }
@@ -577,17 +583,17 @@ static void ShuffleEntrancePool(std::vector<Entrance*>& entrancePool, std::vecto
   auto& restrictiveEntrances = splitEntrances[0];
   auto& softEntrances = splitEntrances[1];
 
-  int retries = 20;
+  int retries = retryCount;
   while (retries > 0) {
-    if (retries != 20) {
+    if (retries < retryCount) {
       #ifdef ENABLE_DEBUG
-        std::string ticks = std::to_string(svcGetSystemTick());
-        auto message = "Failed to connect entrances. Retrying " + std::to_string(retries) + " more times.\nDumping World Graph at " + ticks + "\n";
+        //std::string ticks = std::to_string(svcGetSystemTick());
+        auto message = "Failed to connect entrances. Retrying " + std::to_string(retries) + " more times.\n" /*+ "Dumping World Graph at " + ticks + "\n"*/;
         PlacementLog_Msg(message);
-        Areas::DumpWorldGraph(ticks);
+        //Areas::DumpWorldGraph(ticks);
       #endif
     }
-    retryCount--;
+    retries--;
 
     std::vector<EntrancePair> rollbacks = {};
 
@@ -618,7 +624,7 @@ static void ShuffleEntrancePool(std::vector<Entrance*>& entrancePool, std::vecto
     break;
   }
 
-  if (retryCount <= 0) {
+  if (retries <= 0) {
     PlacementLog_Msg("Entrance placement attempt count exceeded. Restarting randomization completely\n");
     entranceShuffleFailure = true;
   }
@@ -779,7 +785,7 @@ int ShuffleAllEntrances() {
     {{EntranceType::GrottoGrave,     KAKARIKO_VILLAGE,                 KAK_REDEAD_GROTTO,                     0x100B},
      {EntranceType::GrottoGrave,     KAK_REDEAD_GROTTO,                KAKARIKO_VILLAGE,                      0x200B}},
     {{EntranceType::GrottoGrave,     HYRULE_CASTLE_GROUNDS,            HC_STORMS_GROTTO,                      0x100C},
-     {EntranceType::GrottoGrave,     HC_STORMS_GROTTO,                 HYRULE_CASTLE_GROUNDS,                 0x200C}},
+     {EntranceType::GrottoGrave,     HC_STORMS_GROTTO,                 CASTLE_GROUNDS,                        0x200C}},
     {{EntranceType::GrottoGrave,     HYRULE_FIELD,                     HF_TEKTITE_GROTTO,                     0x100D},
      {EntranceType::GrottoGrave,     HF_TEKTITE_GROTTO,                HYRULE_FIELD,                          0x200D}},
     {{EntranceType::GrottoGrave,     HYRULE_FIELD,                     HF_NEAR_KAK_GROTTO,                    0x100E},
@@ -1038,6 +1044,7 @@ int ShuffleAllEntrances() {
   // Disconnect all one way entrances at this point (they need to be connected during all of the above process)
   for (auto& pool : oneWayEntrancePools) {
     for (Entrance* entrance : pool.second) {
+      totalRandomizableEntrances++;
       entrance->Disconnect();
     }
   }
