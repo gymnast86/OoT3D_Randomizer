@@ -328,6 +328,13 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
           if (!location->IsAddedToPool() && locPair.ConditionsMet()) {
 
             location->AddToPool();
+            totalFoundLocations++;
+
+            // If we're searching for all accessible locations, then return once we've found all of them
+            if (mode == SearchMode::AllLocationsReachable && totalFoundLocations == allLocations.size() + gossipStoneLocations.size() + 1) {
+              allLocationsReachable = true;
+              return {};
+            }
 
             if (location->IsAllowed() && location->GetPlacedItemKey() == NONE) {
               accessibleLocations.push_back(loc); //Empty location, consider for placement
@@ -431,6 +438,9 @@ std::vector<LocationKey> GetAccessibleLocations(const std::vector<LocationKey>& 
       playthroughEntrances.push_back(entranceSphere);
     }
   }
+
+  auto m = "Total Found Locations: " + std::to_string(totalFoundLocations) + " allLocations.size(): " + std::to_string(allLocations.size()) + "\n";
+  PlacementLog_Msg(m);
 
   //Check to see if all locations were reached
   if (mode == SearchMode::AllLocationsReachable) {
