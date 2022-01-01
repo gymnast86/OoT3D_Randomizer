@@ -434,8 +434,8 @@ static bool ReplaceEntrance(Entrance* entrance, Entrance* target, std::vector<En
     #ifdef ENABLE_DEBUG
       std::string ticks = std::to_string(svcGetSystemTick());
       auto message = "Dumping World Graph at " + ticks + "\n";
-      //PlacementLog_Msg(message);
-      //Areas::DumpWorldGraph(ticks);
+      // PlacementLog_Msg(message);
+      // Areas::DumpWorldGraph(ticks);
     #endif
     rollbacks.push_back(EntrancePair{entrance, target});
     curNumRandomizedEntrances++;
@@ -445,8 +445,8 @@ static bool ReplaceEntrance(Entrance* entrance, Entrance* target, std::vector<En
     #ifdef ENABLE_DEBUG
       std::string ticks = std::to_string(svcGetSystemTick());
       auto message = "Dumping World Graph at " + ticks + "\n";
-      //PlacementLog_Msg(message);
-      //Areas::DumpWorldGraph(ticks);
+      // PlacementLog_Msg(message);
+      // Areas::DumpWorldGraph(ticks);
     #endif
     if (entrance->GetConnectedRegionKey() != NONE) {
       RestoreConnections(entrance, target);
@@ -508,6 +508,29 @@ static bool PlaceOneWayPriorityEntrance(std::string priorityName, std::list<Area
   return false;
 }
 
+static bool PlaceOtherImpasHouseEntrance(std::vector<Entrance*> entrances, std::vector<Entrance*> targetEntrances, std::vector<EntrancePair>& rollbacks) {
+  // Get the other impas house entrance
+  auto otherImpaTargets = FilterFromPool(targetEntrances, [](const Entrance* target){return (target->GetConnectedRegionKey() == KAK_IMPAS_HOUSE || target->GetConnectedRegionKey() == KAK_IMPAS_HOUSE_BACK);});
+  if (otherImpaTargets.empty()) {
+    return true;
+  }
+
+  Entrance* otherImpaTarget = otherImpaTargets[0];
+  auto m = "Now Placing Other Impa Target: " + otherImpaTarget->GetName() + "\n";
+  PlacementLog_Msg(m);
+  AreaKey otherImpaRegion = otherImpaTarget->GetConnectedRegionKey() != KAK_IMPAS_HOUSE_BACK ? KAK_IMPAS_HOUSE_BACK : KAK_IMPAS_HOUSE;
+  for (Entrance* entrance : entrances) {
+    if (entrance->GetConnectedRegionKey() != NONE || (GetHintRegionHintKey(otherImpaRegion) != GetHintRegionHintKey(entrance->GetParentRegionKey()))) {
+      continue;
+    }
+    if (ReplaceEntrance(entrance, otherImpaTarget, rollbacks)) {
+      return true;
+    }
+  }
+  PlacementLog_Msg("No available entrances for placing other impa region.\n");
+  return false;
+}
+
 // Shuffle entrances by placing them instead of entrances in the provided target entrances list
 static bool ShuffleEntrances(std::vector<Entrance*>& entrances, std::vector<Entrance*>& targetEntrances, std::vector<EntrancePair>& rollbacks) {
 
@@ -525,7 +548,15 @@ static bool ShuffleEntrances(std::vector<Entrance*>& entrances, std::vector<Entr
         continue;
       }
 
+      bool attemptedImpasHousePlacement = (target->GetConnectedRegionKey() == KAK_IMPAS_HOUSE || target->GetConnectedRegionKey() == KAK_IMPAS_HOUSE_BACK);
+
       if (ReplaceEntrance(entrance, target, rollbacks)) {
+        //
+        if (Settings::ShuffleCows && attemptedImpasHousePlacement) {
+          if (!PlaceOtherImpasHouseEntrance(entrances, targetEntrances, rollbacks)) {
+            return false;
+          }
+        }
         break;
       }
     }
