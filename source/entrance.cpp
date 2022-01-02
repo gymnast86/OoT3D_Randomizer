@@ -508,6 +508,7 @@ static bool PlaceOneWayPriorityEntrance(std::string priorityName, std::list<Area
   return false;
 }
 
+// Once the first entrance to Impas House has been placed.
 static bool PlaceOtherImpasHouseEntrance(std::vector<Entrance*> entrances, std::vector<Entrance*> targetEntrances, std::vector<EntrancePair>& rollbacks) {
   // Get the other impas house entrance
   auto otherImpaTargets = FilterFromPool(targetEntrances, [](const Entrance* target){return (target->GetConnectedRegionKey() == KAK_IMPAS_HOUSE || target->GetConnectedRegionKey() == KAK_IMPAS_HOUSE_BACK);});
@@ -520,9 +521,11 @@ static bool PlaceOtherImpasHouseEntrance(std::vector<Entrance*> entrances, std::
   PlacementLog_Msg(m);
   AreaKey otherImpaRegion = otherImpaTarget->GetConnectedRegionKey() != KAK_IMPAS_HOUSE_BACK ? KAK_IMPAS_HOUSE_BACK : KAK_IMPAS_HOUSE;
   for (Entrance* entrance : entrances) {
+    // If the entrance is already connected or it doesn't have the same hint region as the already placed impas house entrance, then don't try to use it
     if (entrance->GetConnectedRegionKey() != NONE || (GetHintRegionHintKey(otherImpaRegion) != GetHintRegionHintKey(entrance->GetParentRegionKey()))) {
       continue;
     }
+    // If the placement succeeds, we return true
     if (ReplaceEntrance(entrance, otherImpaTarget, rollbacks)) {
       return true;
     }
@@ -548,10 +551,12 @@ static bool ShuffleEntrances(std::vector<Entrance*>& entrances, std::vector<Entr
         continue;
       }
 
+      // Store whether or not we're about to attempt placing an entrance to Impas House
       bool attemptedImpasHousePlacement = (target->GetConnectedRegionKey() == KAK_IMPAS_HOUSE || target->GetConnectedRegionKey() == KAK_IMPAS_HOUSE_BACK);
 
       if (ReplaceEntrance(entrance, target, rollbacks)) {
-        //
+        // If shuffle cows is enabled and the last entrance was one to Impas House,
+        // then immediately attempt to place the other entrance to Impas House
         if (Settings::ShuffleCows && attemptedImpasHousePlacement) {
           if (!PlaceOtherImpasHouseEntrance(entrances, targetEntrances, rollbacks)) {
             return false;
