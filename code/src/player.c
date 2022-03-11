@@ -3,6 +3,9 @@
 #include "custom_models.h"
 #include "player.h"
 
+#define PlayerActor_Init_addr 0x191844
+#define PlayerActor_Init ((ActorFunc)PlayerActor_Init_addr)
+
 #define PlayerActor_Update_addr 0x1E1B54
 #define PlayerActor_Update ((ActorFunc)PlayerActor_Update_addr)
 
@@ -44,6 +47,17 @@ void Player_SetChildCustomTunicCMAB(void) {
     TexAnim_Spawn(PLAYER->skelAnime.unk_28->unk_0C, cmabMan);
 }
 
+void PlayerActor_rInit(Actor* thisx, GlobalContext* globalCtx) {
+    PlayerActor_Init(thisx, globalCtx);
+
+    // If Link spawns at the Hyrule Field from Zoras River exit with zero speed
+    // then he'll immediately trigger the loading zone back to Zoras River. Set
+    // his position so this doesn't happen.
+    if (gSaveContext.entranceIndex == 0x181) {
+        thisx->world.pos.x -= 10.0f;
+    }
+}
+
 void PlayerActor_rUpdate(Actor* thisx, GlobalContext* globalCtx) {
     PlayerActor_Update(thisx, globalCtx);
     if (healthDecrement <= 0) {
@@ -57,4 +71,3 @@ void PlayerActor_rUpdate(Actor* thisx, GlobalContext* globalCtx) {
         healthDecrement = 0;
     }
 }
-

@@ -276,7 +276,7 @@ static void WriteLocation(
     node->SetAttribute("price", price);
   }
   if (!location->IsAddedToPool()) {
-    #ifdef ENABLE_DEBUG  
+    #ifdef ENABLE_DEBUG
       node->SetAttribute("not-added", true);
     #endif
   }
@@ -566,8 +566,6 @@ bool PlacementLog_Write() {
   WriteEnabledTricks(placementLog);
   WriteMasterQuestDungeons(placementLog);
   WriteRequiredTrials(placementLog);
-
-  placementtxt = "\n" + placementtxt;
 
   auto node = rootNode->InsertNewChildElement("log");
   auto contentNode = node->InsertNewText(placementtxt.c_str());

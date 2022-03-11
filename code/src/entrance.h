@@ -30,14 +30,18 @@ typedef struct {
 
 typedef enum {
     ENTRANCE_GROUP_NO_GROUP,
+    ENTRANCE_GROUP_ONE_WAY,
     ENTRANCE_GROUP_KOKIRI_FOREST,
     ENTRANCE_GROUP_LOST_WOODS,
+    ENTRANCE_GROUP_SFM,
     ENTRANCE_GROUP_KAKARIKO,
     ENTRANCE_GROUP_GRAVEYARD,
     ENTRANCE_GROUP_DEATH_MOUNTAIN_TRAIL,
     ENTRANCE_GROUP_DEATH_MOUNTAIN_CRATER,
     ENTRANCE_GROUP_GORON_CITY,
+    ENTRANCE_GROUP_ZORAS_RIVER,
     ENTRANCE_GROUP_ZORAS_DOMAIN,
+    ENTRANCE_GROUP_ZORAS_FOUNTAIN,
     ENTRANCE_GROUP_HYRULE_FIELD,
     ENTRANCE_GROUP_LON_LON_RANCH,
     ENTRANCE_GROUP_LAKE_HYLIA,
@@ -53,16 +57,20 @@ typedef enum {
     ENTRANCE_TYPE_INTERIOR,
     ENTRANCE_TYPE_GROTTO,
     ENTRANCE_TYPE_DUNGEON,
+    ENTRANCE_TYPE_OWL_FLIGHT,
+    ENTRANCE_TYPE_SPAWN,
+    ENTRANCE_TYPE_WARP_SONG,
     ENTRANCE_TYPE_COUNT,
 } TrackerEntranceType;
 
 typedef struct {
     s16 index;
-    char* name;
+    char* source;
+    char* destination;
     SpoilerEntranceGroup group;
     TrackerEntranceType type;
     u32 color;
-    u8 oneExit;
+    u8 isOnlyAreaEntrance;
 } EntranceData;
 
 typedef struct {
@@ -77,6 +85,7 @@ extern EntranceTrackingData gEntranceTrackingData;
 
 void Entrance_Init(void);
 s16  Entrance_GetOverride(s16 index);
+s16  Entrance_OverrideNextIndexWithoutGrottoIndex(s16 nextEntranceIndex);
 s16  Entrance_OverrideNextIndex(s16 nextEntranceIndex);
 u32  Entrance_IsLostWoodsBridge(void);
 void Entrance_EnteredLocation(void);

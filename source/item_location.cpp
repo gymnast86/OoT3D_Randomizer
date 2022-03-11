@@ -749,7 +749,7 @@ void LocationTable_Init() {
     locationTable[DMT_GREAT_FAIRY_REWARD]                        = ItemLocation::Delayed(0xFF, 0x13, "DMT Great Fairy Reward",                         DMT_GREAT_FAIRY_REWARD,      PROGRESSIVE_MAGIC_METER,   {Category::cDeathMountainTrail, Category::cDeathMountain, Category::cFairies},                                    SpoilerCollectionCheck::Chest(0x3B, 0x00),               SpoilerCollectionCheckGroup::GROUP_DEATH_MOUNTAIN);
     locationTable[DMC_GREAT_FAIRY_REWARD]                        = ItemLocation::Delayed(0xFF, 0x14, "DMC Great Fairy Reward",                         DMC_GREAT_FAIRY_REWARD,      PROGRESSIVE_MAGIC_METER,   {Category::cDeathMountainCrater, Category::cDeathMountain, Category::cFairies},                                   SpoilerCollectionCheck::Chest(0x3B, 0x01),               SpoilerCollectionCheckGroup::GROUP_DEATH_MOUNTAIN);
     locationTable[OGC_GREAT_FAIRY_REWARD]                        = ItemLocation::Delayed(0xFF, 0x15, "OGC Great Fairy Reward",                         OGC_GREAT_FAIRY_REWARD,      DOUBLE_DEFENSE,            {Category::cOutsideGanonsCastle, Category::cFairies},                                                             SpoilerCollectionCheck::Chest(0x3B, 0x02),               SpoilerCollectionCheckGroup::GROUP_DUNGEON_GANONS_CASTLE);
-                                                                                                                                                                                                               
+
     locationTable[SHEIK_IN_FOREST]                               = ItemLocation::Delayed(0xFF, 0x20, "Sheik in Forest",                                SHEIK_IN_FOREST,             MINUET_OF_FOREST,          {Category::cSacredForestMeadow, Category::cForest, Category::cSong,},                                             SpoilerCollectionCheck::EventChkInf(0x50),               SpoilerCollectionCheckGroup::GROUP_LOST_WOODS);
     locationTable[SHEIK_IN_CRATER]                               = ItemLocation::Delayed(0xFF, 0x21, "Sheik in Crater",                                SHEIK_IN_CRATER,             BOLERO_OF_FIRE,            {Category::cDeathMountainCrater, Category::cDeathMountain, Category::cSong,},                                     SpoilerCollectionCheck::EventChkInf(0x51),               SpoilerCollectionCheckGroup::GROUP_DEATH_MOUNTAIN);
     locationTable[SHEIK_IN_ICE_CAVERN]                           = ItemLocation::Delayed(0xFF, 0x22, "Sheik in Ice Cavern",                            SHEIK_IN_ICE_CAVERN,         SERENADE_OF_WATER,         {Category::cIceCavern, Category::cSong, Category::cSongDungeonReward},                                            SpoilerCollectionCheck::EventChkInf(0x52),               SpoilerCollectionCheckGroup::GROUP_DUNGEON_ICE_CAVERN);
@@ -1449,11 +1449,8 @@ void GenerateLocationPool() {
 
 void PlaceItemInLocation(LocationKey locKey, ItemKey item, bool applyEffectImmediately /*= false*/, bool setHidden /*= false*/) {
   auto loc = Location(locKey);
-  PlacementLog_Msg("\n");
-  PlacementLog_Msg(ItemTable(item).GetName().GetEnglish());
-  PlacementLog_Msg(" placed at ");
-  PlacementLog_Msg(loc->GetName());
-  PlacementLog_Msg("\n\n");
+  auto message = "\n" + ItemTable(item).GetName().GetEnglish() + " placed at " + loc->GetName() + "\n\n";
+  PlacementLog_Msg(message);
 
   if (applyEffectImmediately || Settings::Logic.Is(LOGIC_NONE) || Settings::Logic.Is(LOGIC_VANILLA)) {
     ItemTable(item).ApplyEffect();

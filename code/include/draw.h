@@ -59,6 +59,9 @@
 #define ENTR_COLOR_INTERIOR     RGB8(0x56, 0xB4, 0xE9) // Light Blue
 #define ENTR_COLOR_GROTTO       RGB8(0xE6, 0x9F, 0x00) // Orange
 #define ENTR_COLOR_DUNGEON      RGB8(0xCC, 0x79, 0xA7) // Pink
+#define ENTR_COLOR_OWL_FLIGHT   RGB8(0xFF, 0xFF, 0x00) // Yellow
+#define ENTR_COLOR_SPAWN        RGB8(0xFF, 0xFF, 0x00) // Yellow
+#define ENTR_COLOR_WARP_SONG    RGB8(0xFF, 0xFF, 0x00) // Yellow
 
 #define DRAW_MAX_FORMATTED_STRING_SIZE  512
 

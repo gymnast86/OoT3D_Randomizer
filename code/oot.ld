@@ -148,10 +148,6 @@ SECTIONS
 		*(.patch_SariasSongCheckFlag)
 	}
 
-	.patch_DampeCheckCollectibleFlag 0x169F88 : {
-		*(.patch_DampeCheckCollectibleFlag)
-	}
-
 	.patch_GrogCheckForShouldDespawn 0x16485C : {
 		*(.patch_GrogCheckForShouldDespawn)
 	}
@@ -644,6 +640,10 @@ SECTIONS
 		*(.patch_NoSilverGauntletsCutsceneWarp)
 	}
 
+	.patch_FishingIgnoreTempBOne 0x2C3A10 : {
+		*(.patch_FishingIgnoreTempBOne)
+	}
+
 	.patch_DoorOfTimeOpenCutscene 0x2C6218 : {
 		*(.patch_DoorOfTimeOpenCutscene)
 	}
@@ -734,6 +734,10 @@ SECTIONS
 
 	.patch_FairyReviveHealAmount 0x34AF48 : {
 		*(.patch_FairyReviveHealAmount)
+	}
+
+	.patch_FishingIgnoreTempBTwo 0x34CFCC : {
+		*(.patch_FishingIgnoreTempBTwo)
 	}
 
 	.patch_FWLoadSet 0x34D9E8 : {
@@ -1060,6 +1064,10 @@ SECTIONS
 		*(.patch_LoadGame)
 	}
 
+	.patch_DontSetMotionSetting 0x447410 : {
+		*(.patch_DontSetMotionSetting)
+	}
+
 	.patch_OverrideFogDuringGameplayInit 0x4485B4 : {
 		*(.patch_OverrideFogDuringGameplayInit)
 	}
@@ -1074,6 +1082,10 @@ SECTIONS
 
 	.patch_SaveFile_Init 0x449A04 : {
 		*(.patch_SaveFile_Init)
+	}
+
+	.patch_SavewarpSetRespawnFlag 0x449E40 : {
+		*(.patch_SavewarpSetRespawnFlag)
 	}
 
 	.patch_GetCustomMessageEntryTwo 0x44D564 : {
@@ -1188,14 +1200,6 @@ SECTIONS
 		*(.patch_CheckForPocketCuccoHatchKankyo)
 	}
 
-	.patch_FishingStoreTempB 0x475F8C : {
-		*(.patch_FishingStoreTempB)
-	}
-
-	.patch_FishingRestoreTempB 0x475FC0 : {
-		*(.patch_FishingRestoreTempB)
-	}
-
 	.patch_EnableFW 0x476D1C : {
 		*(.patch_EnableFW)
 	}
@@ -1216,6 +1220,10 @@ SECTIONS
 		*(.patch_SetBGMDayNight)
 	}
 
+	.patch_WarpSongEntranceOverride 0x488850 : {
+		*(.patch_WarpSongEntranceOverride)
+	}
+
 	.patch_SwapFaroresWind 0x49186C : {
 		*(.patch_SwapFaroresWind)
 	}
@@ -1230,6 +1238,14 @@ SECTIONS
 
 	.patch_FireTempleItemGiveTwo 0x491B60 : {
 		*(.patch_FireTempleItemGiveTwo)
+	}
+
+	.patch_DMTOwlEntranceOverride 0x492064 : {
+		*(.patch_DMTOwlEntranceOverride)
+	}
+
+	.patch_LHOwlEntranceOverride 0x492080 : {
+		*(.patch_LHOwlEntranceOverride)
 	}
 
 	.patch_FairyUseHealAmount 0x4968B4 : {

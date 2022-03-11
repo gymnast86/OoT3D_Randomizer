@@ -156,6 +156,11 @@ void SaveFile_Init(u32 fileBaseIndex) {
 
     SaveFile_SetStartingInventory();
     SaveFile_InitExtSaveData(fileBaseIndex + gSaveContext.fileNum);
+
+    //Ingame Defaults
+    gSaveContext.zTargetingSetting = gSettingsContext.zTargeting;
+    gSaveContext.cameraControlSetting = gSettingsContext.cameraControl;
+    gSaveContext.motionControlSetting = gSettingsContext.motionControl;
 }
 
 void SaveFile_SaveChildBButton(void) {
@@ -269,13 +274,15 @@ void SaveFile_SetEntranceDiscovered(u16 entranceIndex) {
     if (idx < SAVEFILE_ENTRANCES_DISCOVERED_IDX_COUNT) {
         u32 entranceBit = 1 << (entranceIndex - (idx * numBits));
         gExtSaveData.entrancesDiscovered[idx] |= entranceBit;
-        // Set connected
-        for (size_t i = 0; i < ENTRANCE_OVERRIDES_MAX_COUNT; i++) {
-            if (entranceIndex == rEntranceOverrides[i].index) {
-                if (!SaveFile_GetIsEntranceDiscovered(rEntranceOverrides[i].overrideDestination)) {
-                    SaveFile_SetEntranceDiscovered(rEntranceOverrides[i].overrideDestination);
+        // Set connected if entrances are coupled
+        if (gSettingsContext.decoupleEntrances == OFF) {
+            for (size_t i = 0; i < ENTRANCE_OVERRIDES_MAX_COUNT; i++) {
+                if (entranceIndex == rEntranceOverrides[i].index) {
+                    if (!SaveFile_GetIsEntranceDiscovered(rEntranceOverrides[i].overrideDestination)) {
+                        SaveFile_SetEntranceDiscovered(rEntranceOverrides[i].overrideDestination);
+                    }
+                    break;
                 }
-                break;
             }
         }
     }
@@ -576,9 +583,9 @@ void SaveFile_InitExtSaveData(u32 saveNumber) {
     memset(&gExtSaveData.entrancesDiscovered, 0, sizeof(gExtSaveData.entrancesDiscovered));
     gExtSaveData.hasTraveledTimeOnce = 0;
     // Ingame Options
-    gExtSaveData.option_EnableBGM = 1;
-    gExtSaveData.option_EnableSFX = 1;
-    gExtSaveData.option_SilenceNavi = 0;
+    gExtSaveData.option_EnableBGM = gSettingsContext.playMusic;
+    gExtSaveData.option_EnableSFX = gSettingsContext.playSFX;
+    gExtSaveData.option_SilenceNavi = gSettingsContext.silenceNavi;
 }
 
 void SaveFile_LoadExtSaveData(u32 saveNumber) {

@@ -1,6 +1,7 @@
 #include "z3D/z3D.h"
 #include "settings.h"
 #include "entrance.h"
+#include "grotto.h"
 
 #define BgBdanSwitch_Init_addr 0x276508
 #define BgBdanSwitch_Init ((ActorFunc)BgBdanSwitch_Init_addr)

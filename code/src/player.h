@@ -5,6 +5,7 @@
 
 extern u16 healthDecrement;
 
+void PlayerActor_rInit(Actor* thisx, GlobalContext* globalCtx);
 void PlayerActor_rUpdate(Actor* thisx, GlobalContext* globalCtx);
 
 #endif //_PLAYER_H_

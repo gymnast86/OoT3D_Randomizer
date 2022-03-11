@@ -311,6 +311,11 @@ namespace Settings {
   extern Option ShuffleOverworldEntrances;
   extern Option ShuffleInteriorEntrances;
   extern Option ShuffleGrottoEntrances;
+  extern Option ShuffleOwlDrops;
+  extern Option ShuffleWarpSongs;
+  extern Option ShuffleOverworldSpawns;
+  extern Option MixedEntrancePools;
+  extern Option DecoupleEntrances;
   extern Option BombchusInLogic;
   extern Option AmmoDrops;
   extern Option HeartDropRefill;
@@ -538,6 +543,7 @@ namespace Settings {
   extern Option LogicLensGtgMQ;
   extern Option LogicLensCastleMQ;
   extern Option LogicSpiritTrialHookshot;
+  extern Option LogicFlamingChests;
 
   //Glitch Settings
   extern Option GlitchISG;
@@ -549,6 +555,15 @@ namespace Settings {
   extern Option GlitchLedgeClip;
   extern Option GlitchTripleSlashClip;
 
+  //Ingame Default Settings
+  extern Option ZTargeting;
+  extern Option CameraControl;
+  extern Option MotionControl;
+  extern Option TogglePlayMusic;
+  extern Option TogglePlaySFX;
+  extern Option SilenceNavi;
+
+  //Cosmetic Settings
   extern Option CustomTunicColors;
   extern Option ChildTunicColor;
   extern Option KokiriTunicColor;
