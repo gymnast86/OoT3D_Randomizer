@@ -229,3 +229,4 @@ namespace Areas {
 void  AreaTable_Init();
 Area* AreaTable(const AreaKey areaKey);
 std::vector<Entrance*> GetShuffleableEntrances(EntranceType type, bool onlyPrimary = true);
+std::vector<Entrance*> GetShuffledEntrances(EntranceType type, bool onlyPrimary = true);

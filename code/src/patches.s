@@ -1780,6 +1780,26 @@ Multiplayer_OnLoadFile_patch:
 SendDroppedBottleContents_patch:
     bl hook_SendDroppedBottleContents
 
+.section .patch_WarpSongEntranceOverride
+.global WarpSongEntranceOverride_patch
+WarpSongEntranceOverride_patch:
+    bl hook_WarpSongEntranceOverride
+
+.section .patch_DMTOwlEntranceOverride
+.global DMTOwlEntranceOverride_patch
+DMTOwlEntranceOverride_patch:
+    b hook_OwlEntranceOverride
+
+.section .patch_LHOwlEntranceOverride
+.global LHOwlEntranceOverride_patch
+LHOwlEntranceOverride_patch:
+    b hook_OwlEntranceOverride
+
+.section .patch_SavewarpSetRespawnFlag
+.global SavewarpSetRespawnFlag_patch
+SavewarpSetRespawnFlag_patch:
+    bl hook_SavewarpSetRespawnFlag
+
 .section .patch_loader
 .global loader_patch
 

@@ -264,13 +264,54 @@ void AreaTable_Init() {
 
   areaTable[ROOT_EXITS] = Area("Root Exits", "", NONE, NO_DAY_NIGHT_CYCLE, {}, {}, {
                   //Exits
-                  Entrance(KF_LINKS_HOUSE,            {[]{return IsChild;}}),
-                  Entrance(TEMPLE_OF_TIME,            {[]{return (CanPlay(PreludeOfLight)   && CanLeaveForest) || IsAdult;}}),
-                  Entrance(SACRED_FOREST_MEADOW,      {[]{return  CanPlay(MinuetOfForest);}}),
-                  Entrance(DMC_CENTRAL_LOCAL,         {[]{return  CanPlay(BoleroOfFire)     && CanLeaveForest;}}),
-                  Entrance(LAKE_HYLIA,                {[]{return  CanPlay(SerenadeOfWater)  && CanLeaveForest;}}),
-                  Entrance(GRAVEYARD_WARP_PAD_REGION, {[]{return  CanPlay(NocturneOfShadow) && CanLeaveForest;}}),
-                  Entrance(DESERT_COLOSSUS,           {[]{return  CanPlay(RequiemOfSpirit)  && CanLeaveForest;}}),
+                  Entrance(CHILD_SPAWN,             {[]{return IsChild;}}),
+                  Entrance(ADULT_SPAWN,             {[]{return IsAdult;}}),
+                  Entrance(MINUET_OF_FOREST_WARP,   {[]{return CanPlay(MinuetOfForest);}}),
+                  Entrance(BOLERO_OF_FIRE_WARP,     {[]{return CanPlay(BoleroOfFire)     && CanLeaveForest;}}),
+                  Entrance(SERENADE_OF_WATER_WARP,  {[]{return CanPlay(SerenadeOfWater)  && CanLeaveForest;}}),
+                  Entrance(REQUIEM_OF_SPIRIT_WARP,  {[]{return CanPlay(RequiemOfSpirit)  && CanLeaveForest;}}),
+                  Entrance(NOCTURNE_OF_SHADOW_WARP, {[]{return CanPlay(NocturneOfShadow) && CanLeaveForest;}}),
+                  Entrance(PRELUDE_OF_LIGHT_WARP,   {[]{return CanPlay(PreludeOfLight)   && CanLeaveForest;}}),
+  });
+
+  areaTable[CHILD_SPAWN] = Area("Child Spawn", "", NONE, NO_DAY_NIGHT_CYCLE, {}, {}, {
+                  //Exits
+                  Entrance(KF_LINKS_HOUSE, {[]{return true;}}),
+  });
+
+  areaTable[ADULT_SPAWN] = Area("Adult Spawn", "", NONE, NO_DAY_NIGHT_CYCLE, {}, {}, {
+                  //Exits
+                  Entrance(TEMPLE_OF_TIME, {[]{return true;}}),
+  });
+
+  areaTable[MINUET_OF_FOREST_WARP] = Area("Minuet of Forest Warp", "", NONE, NO_DAY_NIGHT_CYCLE, {}, {}, {
+                  //Exits
+                  Entrance(SACRED_FOREST_MEADOW, {[]{return true;}}),
+  });
+
+  areaTable[BOLERO_OF_FIRE_WARP] = Area("Bolero of Fire Warp", "", NONE, NO_DAY_NIGHT_CYCLE, {}, {}, {
+                  //Exits
+                  Entrance(DMC_CENTRAL_LOCAL, {[]{return true;}}),
+  });
+
+  areaTable[SERENADE_OF_WATER_WARP] = Area("Serenade of Water Warp", "", NONE, NO_DAY_NIGHT_CYCLE, {}, {}, {
+                  //Exits
+                  Entrance(LAKE_HYLIA, {[]{return true;}}),
+  });
+
+  areaTable[REQUIEM_OF_SPIRIT_WARP] = Area("Requiem of Spirit Warp", "", NONE, NO_DAY_NIGHT_CYCLE, {}, {}, {
+                  //Exits
+                  Entrance(DESERT_COLOSSUS, {[]{return true;}}),
+  });
+
+  areaTable[NOCTURNE_OF_SHADOW_WARP] = Area("Nocturne of Shadow Warp", "", NONE, NO_DAY_NIGHT_CYCLE, {}, {}, {
+                  //Exits
+                  Entrance(GRAVEYARD_WARP_PAD_REGION, {[]{return true;}}),
+  });
+
+  areaTable[PRELUDE_OF_LIGHT_WARP] = Area("Prelude of Light Warp", "", NONE, NO_DAY_NIGHT_CYCLE, {}, {}, {
+                  //Exits
+                  Entrance(TEMPLE_OF_TIME, {[]{return true;}}),
   });
 
   areaTable[KOKIRI_FOREST] = Area("Kokiri Forest", "Kokiri Forest", KOKIRI_FOREST, NO_DAY_NIGHT_CYCLE, {
@@ -849,7 +890,6 @@ void AreaTable_Init() {
                 }, {
                   //Locations
                   LocationAccess(COLOSSUS_FREESTANDING_POH, {[]{return IsAdult && CanPlantBean(DESERT_COLOSSUS);}}),
-                  LocationAccess(SHEIK_AT_COLOSSUS,         {[]{return true;}}),
                   LocationAccess(COLOSSUS_GS_BEAN_PATCH,    {[]{return CanPlantBugs && CanChildAttack;}}),
                   LocationAccess(COLOSSUS_GS_TREE,          {[]{return CanUse(HOOKSHOT) && AtNight && CanGetNightTimeGS;}}),
                   LocationAccess(COLOSSUS_GS_HILL,          {[]{return IsAdult && AtNight && (CanPlantBean(DESERT_COLOSSUS) || CanUse(LONGSHOT) || (LogicColossusGS && CanUse(HOOKSHOT))) && CanGetNightTimeGS;}}),
@@ -860,6 +900,14 @@ void AreaTable_Init() {
                   Entrance(SPIRIT_TEMPLE_ENTRYWAY,        {[]{return true;}}),
                   Entrance(WASTELAND_NEAR_COLOSSUS,       {[]{return true;}}),
                   Entrance(COLOSSUS_GROTTO,               {[]{return CanUse(SILVER_GAUNTLETS);}}),
+  });
+
+  areaTable[DESERT_COLOSSUS_FROM_SPIRIT_ENTRYWAY] = Area("Desert Colossus From Spirit Entryway", "Desert Colossus", DESERT_COLOSSUS, NO_DAY_NIGHT_CYCLE, {}, {
+                  //Locations
+                  LocationAccess(SHEIK_AT_COLOSSUS, {[]{return true;}}),
+                }, {
+                  //Exits
+                  Entrance(DESERT_COLOSSUS, {[]{return true;}}),
   });
 
   areaTable[COLOSSUS_GREAT_FAIRY_FOUNTAIN] = Area("Colossus Great Fairy Fountain", "", NONE, NO_DAY_NIGHT_CYCLE, {}, {
@@ -1146,7 +1194,6 @@ void AreaTable_Init() {
                   LocationAccess(KAK_GS_GUARDS_HOUSE,             {[]{return IsChild && AtNight && CanGetNightTimeGS;}}),
                   LocationAccess(KAK_GS_TREE,                     {[]{return IsChild && AtNight && CanGetNightTimeGS;}}),
                   LocationAccess(KAK_GS_WATCHTOWER,               {[]{return IsChild && (Slingshot || HasBombchus) && AtNight && CanGetNightTimeGS;}}),
-                  LocationAccess(KAK_GS_ABOVE_IMPAS_HOUSE,        {[]{return CanUse(HOOKSHOT) && AtNight && CanGetNightTimeGS;}}),
                 }, {
                   //Exits
                   Entrance(HYRULE_FIELD,                {[]{return true;}}),
@@ -1160,7 +1207,8 @@ void AreaTable_Init() {
                   Entrance(BOTTOM_OF_THE_WELL_ENTRYWAY, {[]{return DrainWell && (IsChild || ShuffleDungeonEntrances);}}),
                   Entrance(KAK_POTION_SHOP_FRONT,       {[]{return AtDay || IsChild;}}),
                   Entrance(KAK_REDEAD_GROTTO,           {[]{return CanOpenBombGrotto;}}),
-                  Entrance(KAK_IMPAS_LEDGE,             {[]{return (IsChild && AtDay) || CanUse(HOOKSHOT);}}),
+                  Entrance(KAK_IMPAS_LEDGE,             {[]{return (IsChild && AtDay);}}),
+                  Entrance(KAK_IMPAS_ROOFTOP,           {[]{return CanUse(HOOKSHOT);}}),
                   Entrance(KAK_ROOFTOP,                 {[]{return CanUse(HOOKSHOT) || (LogicManOnRoof && (IsAdult || AtDay || Slingshot || HasBombchus));}}),
                   Entrance(THE_GRAVEYARD,               {[]{return true;}}),
                   Entrance(KAK_BEHIND_GATE,             {[]{return IsAdult || (KakarikoVillageGateOpen);}}),
@@ -1170,6 +1218,15 @@ void AreaTable_Init() {
                   //Exits
                   Entrance(KAK_IMPAS_HOUSE_BACK, {[]{return true;}}),
                   Entrance(KAKARIKO_VILLAGE,     {[]{return true;}}),
+  });
+
+  areaTable[KAK_IMPAS_ROOFTOP] = Area("Kak Impas Rooftop", "Kakariko Village", KAKARIKO_VILLAGE, NO_DAY_NIGHT_CYCLE, {}, {
+                  //Locations
+                  LocationAccess(KAK_GS_ABOVE_IMPAS_HOUSE, {[]{return IsAdult && AtNight;}}),
+                }, {
+                  //Exits
+                  Entrance(KAK_IMPAS_LEDGE,  {[]{return true;}}),
+                  Entrance(KAKARIKO_VILLAGE, {[]{return true;}}),
   });
 
   areaTable[KAK_ROOFTOP] = Area("Kak Rooftop", "Kakariko Village", KAKARIKO_VILLAGE, NO_DAY_NIGHT_CYCLE, {}, {
@@ -1441,7 +1498,7 @@ void AreaTable_Init() {
 
   areaTable[DMT_OWL_FLIGHT] = Area("DMT Owl Flight", "Death Mountain", NONE, NO_DAY_NIGHT_CYCLE, {}, {}, {
                   //Exits
-                  Entrance(KAK_IMPAS_LEDGE, {[]{return true;}}),
+                  Entrance(KAK_IMPAS_ROOFTOP, {[]{return true;}}),
   });
 
   areaTable[DMT_COW_GROTTO] = Area("DMT Cow Grotto", "", NONE, NO_DAY_NIGHT_CYCLE, {}, {
@@ -1918,9 +1975,9 @@ void AreaTable_Init() {
 
   areaTable[SPIRIT_TEMPLE_ENTRYWAY] = Area("Spirit Temple Entryway", "Spirit Temple", SPIRIT_TEMPLE, NO_DAY_NIGHT_CYCLE, {}, {}, {
                   //Exits
-                  Entrance(SPIRIT_TEMPLE_LOBBY,    {[]{return Dungeon::SpiritTemple.IsVanilla();}}),
-                  Entrance(SPIRIT_TEMPLE_MQ_LOBBY, {[]{return Dungeon::SpiritTemple.IsMQ();}}),
-                  Entrance(DESERT_COLOSSUS,        {[]{return true;}}),
+                  Entrance(SPIRIT_TEMPLE_LOBBY,                  {[]{return Dungeon::SpiritTemple.IsVanilla();}}),
+                  Entrance(SPIRIT_TEMPLE_MQ_LOBBY,               {[]{return Dungeon::SpiritTemple.IsMQ();}}),
+                  Entrance(DESERT_COLOSSUS_FROM_SPIRIT_ENTRYWAY, {[]{return true;}}),
   });
 
   areaTable[SHADOW_TEMPLE_ENTRYWAY] = Area("Shadow Temple Entryway", "Shadow Temple", SHADOW_TEMPLE, NO_DAY_NIGHT_CYCLE, {}, {}, {
@@ -3789,9 +3846,18 @@ void AreaTable_Init() {
 
 namespace Areas {
 
-  static std::array<const AreaKey, 304> allAreas = {
+  static std::array<const AreaKey, 314> allAreas = {
     ROOT,
     ROOT_EXITS,
+
+    CHILD_SPAWN,
+    ADULT_SPAWN,
+    MINUET_OF_FOREST_WARP,
+    BOLERO_OF_FIRE_WARP,
+    SERENADE_OF_WATER_WARP,
+    REQUIEM_OF_SPIRIT_WARP,
+    NOCTURNE_OF_SHADOW_WARP,
+    PRELUDE_OF_LIGHT_WARP,
 
     KOKIRI_FOREST,
     KF_LINKS_HOUSE,
@@ -3824,6 +3890,7 @@ namespace Areas {
     KAK_HOUSE_OF_SKULLTULA,
     KAK_IMPAS_HOUSE,
     KAK_IMPAS_LEDGE,
+    KAK_IMPAS_ROOFTOP,
     KAK_IMPAS_HOUSE_BACK,
     KAK_IMPAS_HOUSE_NEAR_COW,
     KAK_WINDMILL,
@@ -3932,6 +3999,7 @@ namespace Areas {
     HAUNTED_WASTELAND,
     WASTELAND_NEAR_COLOSSUS,
     DESERT_COLOSSUS,
+    DESERT_COLOSSUS_FROM_SPIRIT_ENTRYWAY,
     COLOSSUS_GREAT_FAIRY_FOUNTAIN,
     COLOSSUS_GROTTO,
     SPIRIT_TEMPLE_ENTRYWAY,
@@ -4238,4 +4306,12 @@ std::vector<Entrance*> GetShuffleableEntrances(EntranceType type, bool onlyPrima
     }
   }
   return entrancesToShuffle;
+}
+// Retrieve all entrances that have been shuffled
+std::vector<Entrance*> GetShuffledEntrances(EntranceType type, bool onlyPrimary /*= true*/) {
+  auto allShuffledEntrances = GetShuffleableEntrances(type, onlyPrimary);
+  FilterAndEraseFromPool(allShuffledEntrances, [](Entrance* entrance){
+    return !entrance->IsShuffled();
+  });
+  return allShuffledEntrances;
 }

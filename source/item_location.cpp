@@ -1459,11 +1459,8 @@ void GenerateLocationPool() {
 
 void PlaceItemInLocation(LocationKey locKey, ItemKey item, bool applyEffectImmediately /*= false*/, bool setHidden /*= false*/) {
   auto loc = Location(locKey);
-  PlacementLog_Msg("\n");
-  PlacementLog_Msg(ItemTable(item).GetName().GetEnglish());
-  PlacementLog_Msg(" placed at ");
-  PlacementLog_Msg(loc->GetName());
-  PlacementLog_Msg("\n\n");
+  auto message = "\n" + ItemTable(item).GetName().GetEnglish() + " placed at " + loc->GetName() + "\n\n";
+  PlacementLog_Msg(message);
 
   if (applyEffectImmediately || Settings::Logic.Is(LOGIC_NONE) || Settings::Logic.Is(LOGIC_VANILLA)) {
     ItemTable(item).ApplyEffect();

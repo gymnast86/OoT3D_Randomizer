@@ -148,6 +148,14 @@ public:
       addedToPool = false;
     }
 
+    void SetAsAllowed() {
+      isAllowed = true;
+    }
+
+    bool IsAllowed() const {
+      return isAllowed;
+    }
+
     const std::string& GetName() const {
       return name;
     }
@@ -351,6 +359,7 @@ public:
     void ResetVariables() {
       checked = false;
       addedToPool = false;
+      isAllowed = false;
       placedItem = NONE;
       delayedItem = NONE;
       hintedAt = false;
@@ -372,6 +381,7 @@ private:
     bool hintedAt = false;
     std::vector<Category> categories;
     bool addedToPool = false;
+    bool isAllowed = false;
     ItemKey placedItem = NONE;
     ItemKey delayedItem = NONE;
     Option excludedOption = Option::Bool(name, {"Include", "Exclude"}, {"", ""});

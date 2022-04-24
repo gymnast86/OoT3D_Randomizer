@@ -1,6 +1,8 @@
 #include "z3D/z3D.h"
 #include "settings.h"
+#include "entrance.h"
 #include "demo_kankyo.h"
+#include "grotto.h"
 
 #define DemoKankyo_Update_addr 0x262EA4
 #define DemoKankyo_Update ((ActorFunc)DemoKankyo_Update_addr)
@@ -16,22 +18,22 @@ void DemoKankyo_rUpdate(Actor* thisx, GlobalContext* globalCtx) {
         globalCtx->fadeOutTransition = 5;
         switch (globalCtx->unk_2A91[0xEB]) { // text related variable
             case 0:
-                globalCtx->nextEntranceIndex = 0x0600; // Minuet
+                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndex(0x0600); // Minuet
                 break;
             case 1:
-                globalCtx->nextEntranceIndex = 0x04F6; // Bolero
+                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndex(0x04F6); // Bolero
                 break;
             case 2:
-                globalCtx->nextEntranceIndex = 0x0604; // Serenade
+                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndex(0x0604); // Serenade
                 break;
             case 3:
-                globalCtx->nextEntranceIndex = 0x01F1; // Requiem
+                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndex(0x01F1); // Requiem
                 break;
             case 4:
-                globalCtx->nextEntranceIndex = 0x0568; // Nocturne
+                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndex(0x0568); // Nocturne
                 break;
             case 5:
-                globalCtx->nextEntranceIndex = 0x05F4; // Prelude
+                globalCtx->nextEntranceIndex = Entrance_OverrideNextIndex(0x05F4); // Prelude
                 break;
             default:
                 globalCtx->sceneLoadFlag = 0; // if something goes wrong, the animation plays normally

@@ -280,14 +280,16 @@ void SaveFile_SetEntranceDiscovered(u16 entranceIndex) {
     if (idx < SAVEFILE_ENTRANCES_DISCOVERED_IDX_COUNT) {
         u32 entranceBit = 1 << (entranceIndex - (idx * numBits));
         gExtSaveData.entrancesDiscovered[idx] |= entranceBit;
+        // Set connected if entrances are coupled
         Multiplayer_Send_DiscoveredEntrance(idx, entranceBit);
-        // Set connected
-        for (size_t i = 0; i < ENTRANCE_OVERRIDES_MAX_COUNT; i++) {
-            if (entranceIndex == rEntranceOverrides[i].index) {
-                if (!SaveFile_GetIsEntranceDiscovered(rEntranceOverrides[i].overrideDestination)) {
-                    SaveFile_SetEntranceDiscovered(rEntranceOverrides[i].overrideDestination);
+        if (gSettingsContext.decoupleEntrances == OFF) {
+            for (size_t i = 0; i < ENTRANCE_OVERRIDES_MAX_COUNT; i++) {
+                if (entranceIndex == rEntranceOverrides[i].index) {
+                    if (!SaveFile_GetIsEntranceDiscovered(rEntranceOverrides[i].overrideDestination)) {
+                        SaveFile_SetEntranceDiscovered(rEntranceOverrides[i].overrideDestination);
+                    }
+                    break;
                 }
-                break;
             }
         }
     }

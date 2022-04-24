@@ -20,11 +20,15 @@ enum class EntranceType {
     Spawn,
     WarpSong,
     Dungeon,
+    DungeonReverse,
     Interior,
+    InteriorReverse,
     SpecialInterior,
     GrottoGrave,
+    GrottoGraveReverse,
     Overworld,
     Extra,
+    Mixed,
     All,
 };
 
@@ -37,6 +41,11 @@ public:
         for (size_t i = 0; i < conditions_met_.size(); i++) {
             conditions_met[i] = conditions_met_[i];
         }
+    }
+
+    // Resets the glitchless condition for the entrance
+    void SetCondition(ConditionFn newCondition) {
+        conditions_met[0] = newCondition;
     }
 
     bool GetConditionsMet() const {
@@ -84,19 +93,23 @@ public:
     bool ConditionsMet(bool allAgeTimes = false) const {
 
         Area* parent = AreaTable(parentRegion);
-        int conditionsMet = 0;
 
-        if (allAgeTimes && !parent->AllAccess()) {
+        //check all possible day/night condition combinations
+        if (!allAgeTimes) {
+          return (parent->childDay   && CheckConditionAtAgeTime(Logic::IsChild, Logic::AtDay))   ||
+                 (parent->childNight && CheckConditionAtAgeTime(Logic::IsChild, Logic::AtNight)) ||
+                 (parent->adultDay   && CheckConditionAtAgeTime(Logic::IsAdult, Logic::AtDay))   ||
+                 (parent->adultNight && CheckConditionAtAgeTime(Logic::IsAdult, Logic::AtNight));
+        }
+
+        if (!parent->AllAccess()) {
             return false;
         }
 
-        //check all possible day/night condition combinations
-        conditionsMet = (parent->childDay   && CheckConditionAtAgeTime(Logic::IsChild, Logic::AtDay, allAgeTimes))   +
-                        (parent->childNight && CheckConditionAtAgeTime(Logic::IsChild, Logic::AtNight, allAgeTimes)) +
-                        (parent->adultDay   && CheckConditionAtAgeTime(Logic::IsAdult, Logic::AtDay, allAgeTimes))   +
-                        (parent->adultNight && CheckConditionAtAgeTime(Logic::IsAdult, Logic::AtNight, allAgeTimes));
-
-        return conditionsMet && (!allAgeTimes || conditionsMet == 4);
+        return (parent->childDay   && CheckConditionAtAgeTime(Logic::IsChild, Logic::AtDay, allAgeTimes))   &&
+               (parent->childNight && CheckConditionAtAgeTime(Logic::IsChild, Logic::AtNight, allAgeTimes)) &&
+               (parent->adultDay   && CheckConditionAtAgeTime(Logic::IsAdult, Logic::AtDay, allAgeTimes))   &&
+               (parent->adultNight && CheckConditionAtAgeTime(Logic::IsAdult, Logic::AtNight, allAgeTimes));
     }
 
     AreaKey GetAreaKey() const {
